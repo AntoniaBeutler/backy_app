@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:id="@+id/group"
+        android:checkableBehavior="single">
+        <item
+            android:id="@+id/HOTEL"
+            android:title="Hotel"
+            android:visible="true" />
+        <item
+            android:id="@+id/HOSTEL"
+            android:title="Hostel"
+            android:visible="true" />
+        <item
+            android:id="@+id/CAMPING"
+            android:title="Campingside"
+            android:visible="true" />
+        <item
+            android:id="@+id/WATER"
+            android:title="Water"
+            android:visible="true" />
+        <item
+            android:id="@+id/SUPERMARKET"
+            android:title="Supermarket"
+            android:visible="true" />
+        <item
+            android:id="@+id/RESTAURANT"
+            android:title="Restaurant"
+            android:visible="true" />
+        <item
+            android:id="@+id/TRAIN"
+            android:title="Train Station"
+            android:visible="true" />
+        <item
+            android:id="@+id/BUS"
+            android:title="Bus Station"
+            android:visible="true" />
+    </group>
+
+</menu>
