@@ -27,8 +27,4 @@ public class Tile {
         return tile_name;
     }
 
-    public int getTile_type(){
-        return tile_type;
-    }
-
 }
