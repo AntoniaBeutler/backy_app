@@ -30,6 +30,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                 public void onClick(View v) {
                     Intent i = new Intent(context, MapActivity.class);
                     i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    i.putExtra("type", info_text.getText().toString());
                     context.startActivity(i);
                     // item clicked
                 }

@@ -37,14 +37,24 @@ public class MapActivity extends AppCompatActivity {
     MapView map = null;
     Location lastLocation = null;
     GeoPoint homepoint =new GeoPoint(51.0345216,13.7455735);
+    String poiType;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
 
+        poiType = getIntent().getExtras().getString("type");
+
+        switch (poiType){
+            case "Campingside": poiType = "camp_side"; break;
+            case "Water": poiType = "drinking_water"; break;
+            case "Train Station": poiType = "station"; break;
+        }
+
+
         mapfunc();
-        getPOIAsync("supermarket");
+        getPOIAsync(poiType);
         //askPermission();
 
     }
