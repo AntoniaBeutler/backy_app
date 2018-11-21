@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
@@ -18,9 +19,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.location.NominatimPOIProvider;
+import org.osmdroid.bonuspack.location.OverpassAPIProvider;
 import org.osmdroid.bonuspack.location.POI;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
@@ -33,6 +36,7 @@ public class MapActivity extends AppCompatActivity {
     private FusedLocationProviderClient mFusedLocationClient;
     MapView map = null;
     Location lastLocation = null;
+    GeoPoint homepoint =new GeoPoint(51.0345216,13.7455735);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +44,7 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.map_activity);
 
         mapfunc();
+        getPOIAsync("supermarket");
         //askPermission();
 
     }
@@ -47,7 +52,7 @@ public class MapActivity extends AppCompatActivity {
     private void mapfunc(){
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
-        setContentView(R.layout.map_activity);
+        //setContentView(R.layout.map_activity);
         map = (MapView) findViewById(R.id.map);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setUseDataConnection(true);
@@ -63,40 +68,67 @@ public class MapActivity extends AppCompatActivity {
             startPoint = new GeoPoint(lastLocation.getLatitude(), lastLocation.getLongitude());
         }
 
-        mapController.setCenter(startPoint);
+        mapController.setCenter(homepoint);
         Marker startMarker = new Marker(map);
-        startMarker.setPosition(startPoint);
+        startMarker.setPosition(homepoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         map.getOverlays().add(startMarker);
         map.invalidate();
         //startMarker.setIcon(getResources().getDrawable(R.drawable.ic_launcher));
         startMarker.setTitle("Start point");
         map.invalidate();
-        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-        StrictMode.setThreadPolicy(policy);
-        NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
-        ArrayList<POI> pois = poiProvider.getPOICloseTo(startPoint, "supermarket", 10, 0.1);
-        //camp_site  supermarket
+    }
+    private class POILoadingTask extends AsyncTask<String, Void, ArrayList<POI>> {
+        String mFeatureTag;
+        String message;
+        protected ArrayList<POI> doInBackground(String... params) {
 
-        FolderOverlay poiMarkers = new FolderOverlay(this);
-        map.getOverlays().add(poiMarkers);
+            mFeatureTag = params[0];
+            BoundingBox bb = map.getBoundingBox();
+            GeoPoint p=homepoint;
+            double maxDistance = 0.1;
+            bb = new BoundingBox(p.getLatitude()+maxDistance,
+                    p.getLongitude()+maxDistance,
+                    p.getLatitude()-maxDistance,
+                    p.getLongitude()-maxDistance);
 
-
-        //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
-        for (POI poi:pois){
-
-            Marker poiMarker = new Marker(map);
-            poiMarker.setTitle(poi.mType);
-            poiMarker.setSnippet(poi.mDescription);
-            poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(startPoint))+ " m");
-            poiMarker.setPosition(poi.mLocation);
-            //poiMarker.setIcon(poiIcon);
-            if (poi.mThumbnail != null){
-                poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
+            //String osmTag = getOSMTag(mFeatureTag);
+            String osmTag = mFeatureTag;
+            if (osmTag == null){
+                message = mFeatureTag + " is not a valid feature.";
+                return null;
             }
-            poiMarkers.add(poiMarker);
+            NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
+            ArrayList<POI> pois = poiProvider.getPOICloseTo(homepoint, mFeatureTag, 10, maxDistance);
+
+            return pois;
         }
-        map.invalidate();
+        protected void onPostExecute(ArrayList<POI> pois) {
+            FolderOverlay poiMarkers = new FolderOverlay(getApplicationContext());
+            map.getOverlays().add(poiMarkers);
+
+
+            //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
+            for (POI poi:pois){
+
+                Marker poiMarker = new Marker(map);
+                poiMarker.setTitle(poi.mType);
+                poiMarker.setSnippet(poi.mDescription);
+                poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(homepoint))+ " m");
+                poiMarker.setPosition(poi.mLocation);
+                //poiMarker.setIcon(poiIcon);
+                if (poi.mThumbnail != null){
+                    poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
+                }
+                poiMarkers.add(poiMarker);
+            }
+            map.invalidate();
+        }
+
+    }
+    void getPOIAsync(String tag){
+        //mPoiMarkers.getItems().clear();
+        new POILoadingTask().execute(tag);
     }
     private void askPermission(){
         /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
