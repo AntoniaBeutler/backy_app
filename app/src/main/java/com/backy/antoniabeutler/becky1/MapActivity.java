@@ -36,8 +36,9 @@ public class MapActivity extends AppCompatActivity {
     private FusedLocationProviderClient mFusedLocationClient;
     MapView map = null;
     Location lastLocation = null;
-    GeoPoint homepoint =new GeoPoint(51.0345216,13.7455735);
+    GeoPoint homepoint =new GeoPoint(51.029585,13.7455735);
     String poiType;
+    Double longLocation, latLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,10 +46,12 @@ public class MapActivity extends AppCompatActivity {
         setContentView(R.layout.map_activity);
 
         poiType = getIntent().getExtras().getString("type");
+        longLocation = getIntent().getExtras().getDouble("longitudeLocation");
+        latLocation = getIntent().getExtras().getDouble("latitudeLocation");
 
         switch (poiType){
             case "Campingside": poiType = "camp_side"; break;
-            case "Water": poiType = "drinking_water"; break;
+            //case "Water": poiType = "drinking_water"; break;
             case "Train Station": poiType = "station"; break;
         }
 
@@ -72,11 +75,13 @@ public class MapActivity extends AppCompatActivity {
         mapController.setZoom(14);
 
         GeoPoint startPoint;
-        if(lastLocation == null){
-            startPoint = new GeoPoint(51.0300114, 13.746694);
+        if((latLocation == null)|| (longLocation == null)){
+            startPoint = homepoint;
         }else{
-            startPoint = new GeoPoint(lastLocation.getLatitude(), lastLocation.getLongitude());
+            startPoint = new GeoPoint(latLocation, longLocation);
         }
+
+        homepoint = startPoint;
 
         mapController.setCenter(homepoint);
         Marker startMarker = new Marker(map);

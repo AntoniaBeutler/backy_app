@@ -41,6 +41,25 @@
             android:clickable="true"
             app:backgroundTint="@android:color/holo_orange_dark" />
 
+        <TextView
+            android:id="@+id/lat"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_marginStart="49dp"
+            android:layout_marginBottom="16dp"
+            android:text="TextView" />
+
+        <TextView
+            android:id="@+id/longi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignTop="@+id/lat"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="130dp"
+            android:text="TextView" />
+
 
     </RelativeLayout>
 

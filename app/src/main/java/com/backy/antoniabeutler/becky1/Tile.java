@@ -2,29 +2,29 @@ package com.backy.antoniabeutler.becky1;
 
 public class Tile {
 
-    String img_src;
+    int img_src;
     String tile_name;
     int distance;
-    int tile_type;
 
-    public Tile(String img_src, String tile_name, int tile_type){
-        this.img_src = img_src;
-        this.tile_name = tile_name;
-        this.tile_type = tile_type;
+    public Tile(String tile_name){
 
-        switch (tile_type) {
-            case R.id.HOTEL:
-            case R.id.HOSTEL:
-            case R.id.CAMPING:
-            case R.id.WATER:
-            case R.id.SUPERMARKET:
-            case R.id.BUS:
-            case R.id.TRAIN:
+        switch (tile_name){
+            case "Hotel": this.img_src = R.drawable.hotel; break;
+            case "Hostel": this.img_src = R.drawable.hostel; break;
+            case "Campingside": this.img_src = R.drawable.tent; break;
+            case "Water": this.img_src = R.drawable.water; break;
+            case "Supermarket": this.img_src = R.drawable.cart; break;
+            case "Restaurant": this.img_src = R.drawable.restaurant; break;
+            case "Train Station": this.img_src = R.drawable.railway; break;
+            case "Bus Station": this.img_src = R.drawable.bus; break;
         }
+
+        this.tile_name = tile_name;
+
     }
 
     public String getTile_name() {
         return tile_name;
     }
-
+    public int getImg_src() {return img_src;}
 }
