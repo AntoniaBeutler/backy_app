@@ -18,8 +18,16 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_ID = "id";
     private static final String KEY_NAME = "name";
     private static final String KEY_PASSWORD = "password";
+    private static final String KEY_HOTEL = "hotel";
+    private static final String KEY_HOSTEL = "hostel";
+    private static final String KEY_CAMPSITE = "campsite";
+    private static final String KEY_WATER = "water";
+    private static final String KEY_RESTAURANT = "restaurant";
+    private static final String KEY_SUPERMARKET = "supermarket";
+    private static final String KEY_BUS = "bus";
+    private static final String KEY_TRAIN = "train";
 
-    private static final String[] COLUMNS = { KEY_ID, KEY_NAME, KEY_PASSWORD };
+    private static final String[] COLUMNS = { KEY_ID, KEY_NAME, KEY_PASSWORD,KEY_HOTEL,KEY_HOSTEL, KEY_CAMPSITE,KEY_WATER,KEY_RESTAURANT,KEY_SUPERMARKET,KEY_BUS,KEY_TRAIN};
 
     public SQLiteDatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -28,7 +36,9 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String CREATION_TABLE = "CREATE TABLE Players ( "
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, " + "name TEXT, "
-                + "position TEXT, " + "height INTEGER )";
+                + "password TEXT, " + "hotel INTEGER, " + "hostel INTEGER, " + "campsite INTEGER, " +
+                "water INTEGER, " + "restaurant INTEGER, " + "supermarket INTEGER, " +
+                "bus INTEGER, " + "train INTEGER )";
 
         db.execSQL(CREATION_TABLE);
     }
@@ -61,11 +71,15 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
             cursor.moveToFirst();
         User user= new User(Integer.parseInt(cursor.getString(0)),cursor.getString(1),cursor.getString(2));
 
-        /*Player player = new Player();
-        player.setId(Integer.parseInt(cursor.getString(0)));
-        player.setName(cursor.getString(1));
-        player.setPosition(cursor.getString(2));
-        player.setHeight(Integer.parseInt(cursor.getString(3)));*/
+        user.setHotel(intToBool(Integer.parseInt(cursor.getString(3))));
+        user.setHostel(intToBool(Integer.parseInt(cursor.getString(4))));
+        user.setCampsite(intToBool(Integer.parseInt(cursor.getString(5))));
+        user.setWater(intToBool(Integer.parseInt(cursor.getString(6))));
+        user.setRestaurant(intToBool(Integer.parseInt(cursor.getString(7))));
+        user.setSupermarket(intToBool(Integer.parseInt(cursor.getString(8))));
+        user.setBus(intToBool(Integer.parseInt(cursor.getString(9))));
+        user.setTrain(intToBool(Integer.parseInt(cursor.getString(10))));
+
 
         return user;
     }
@@ -81,6 +95,17 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             do {
                 user= new User(Integer.parseInt(cursor.getString(0)),cursor.getString(1),cursor.getString(2));
+
+                user.setHotel(intToBool(Integer.parseInt(cursor.getString(3))));
+                user.setHostel(intToBool(Integer.parseInt(cursor.getString(4))));
+                user.setCampsite(intToBool(Integer.parseInt(cursor.getString(5))));
+                user.setWater(intToBool(Integer.parseInt(cursor.getString(6))));
+                user.setRestaurant(intToBool(Integer.parseInt(cursor.getString(7))));
+                user.setSupermarket(intToBool(Integer.parseInt(cursor.getString(8))));
+                user.setBus(intToBool(Integer.parseInt(cursor.getString(9))));
+                user.setTrain(intToBool(Integer.parseInt(cursor.getString(10))));
+
+
                 users.add(user);
             } while (cursor.moveToNext());
         }
@@ -93,6 +118,14 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, user.getName());
         values.put(KEY_PASSWORD, user.getPassword());
+        values.put(KEY_HOTEL,boolToInt(user.getHotel()));
+        values.put(KEY_HOSTEL,boolToInt(user.getHostel()));
+        values.put(KEY_WATER,boolToInt(user.getWater()));
+        values.put(KEY_RESTAURANT,boolToInt(user.getRestaurant()));
+        values.put(KEY_SUPERMARKET,boolToInt(user.getSupermarket()));
+        values.put(KEY_BUS,boolToInt(user.getBus()));
+        values.put(KEY_TRAIN,boolToInt(user.getTrain()));
+        values.put(KEY_CAMPSITE,boolToInt(user.getCampsite()));
 
         // insert
         db.insert(TABLE_NAME,null, values);
@@ -104,6 +137,14 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         ContentValues values = new ContentValues();
         values.put(KEY_NAME, user.getName());
         values.put(KEY_PASSWORD, user.getPassword());
+        values.put(KEY_HOTEL,boolToInt(user.getHotel()));
+        values.put(KEY_HOSTEL,boolToInt(user.getHostel()));
+        values.put(KEY_WATER,boolToInt(user.getWater()));
+        values.put(KEY_RESTAURANT,boolToInt(user.getRestaurant()));
+        values.put(KEY_SUPERMARKET,boolToInt(user.getSupermarket()));
+        values.put(KEY_BUS,boolToInt(user.getBus()));
+        values.put(KEY_TRAIN,boolToInt(user.getTrain()));
+        values.put(KEY_CAMPSITE,boolToInt(user.getCampsite()));
 
         int i = db.update(TABLE_NAME, // table
                 values, // column/value
@@ -113,5 +154,13 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         db.close();
 
         return i;
+    }
+
+    public int boolToInt(boolean b){
+        return (b)? 1 : 0;
+    }
+
+    public boolean intToBool(int i){
+        return i > 0;
     }
 }

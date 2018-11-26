@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private LocationManager locationManager;
     private String provider;
     private Location location;
+    private SQLiteDatabaseHandler db;
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
@@ -65,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        db = new SQLiteDatabaseHandler(this);
+        addUser(1,"FirstUser","default");
 
         latituteField = findViewById(R.id.lat);
         longitudeField = findViewById(R.id.longi);
@@ -95,6 +99,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
         addTiles();
     }
 
@@ -198,6 +203,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     public void onProviderDisabled(String provider) {
         Toast.makeText(this, "Disabled provider " + provider,
                 Toast.LENGTH_SHORT).show();
+    }
+
+    public void addUser(int id, String name,String password){
+        db.addUser(new User(id,name,password));
     }
 
 
