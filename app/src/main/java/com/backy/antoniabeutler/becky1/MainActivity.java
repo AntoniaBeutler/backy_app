@@ -1,13 +1,16 @@
 package com.backy.antoniabeutler.becky1;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.BatteryManager;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
@@ -40,11 +43,40 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private String provider;
     private Location location;
 
+
+    private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            boolean batteryLow = intent.getAction().equals(Intent.ACTION_BATTERY_LOW);
+            if(batteryLow) lowbattery();
+            boolean batteryOkay = intent.getAction().equals(Intent.ACTION_BATTERY_OKAY);
+            if(batteryOkay) okaybattery();
+
+            /*int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            if(level < 30)
+                lowbattery();
+            else
+                okaybattery();*/
+        }
+    };
+    public void okaybattery(){
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            locationManager.requestLocationUpdates(provider, 400, 1, this);
+        }
+    }
+    public void lowbattery(){
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            locationManager.requestLocationUpdates(provider, 1000, 1, this);
+        }
+    }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+
+
 
         latituteField = findViewById(R.id.lat);
         longitudeField = findViewById(R.id.longi);
@@ -72,7 +104,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             latituteField.setText("Location not available");
             longitudeField.setText("Location not available");
         }
-
+        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         addTiles();
     }
 
@@ -160,4 +193,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         Toast.makeText(this, "Disabled provider " + provider,
                 Toast.LENGTH_SHORT).show();
     }
+
+
 }
