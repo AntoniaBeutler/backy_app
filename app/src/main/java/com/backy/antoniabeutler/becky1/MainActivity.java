@@ -43,40 +43,28 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private String provider;
     private Location location;
 
-
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            boolean batteryLow = intent.getAction().equals(Intent.ACTION_BATTERY_LOW);
-            if(batteryLow) lowbattery();
+            /*boolean batteryLow = intent.getAction().equals(Intent.ACTION_BATTERY_LOW);
+            if(batteryLow) lowBattery();
             boolean batteryOkay = intent.getAction().equals(Intent.ACTION_BATTERY_OKAY);
-            if(batteryOkay) okaybattery();
+            if(batteryOkay) okayBattery();*/
 
-            /*int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-            if(level < 30)
-                lowbattery();
-            else
-                okaybattery();*/
+            int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+            if(level < 30) {
+                lowBattery();
+            } else {
+                okayBattery();
+            }
         }
     };
-    public void okaybattery(){
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 400, 1, this);
-        }
-    }
-    public void lowbattery(){
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 1000, 1, this);
-        }
-    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-
-
 
         latituteField = findViewById(R.id.lat);
         longitudeField = findViewById(R.id.longi);
@@ -93,7 +81,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, false);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-             location = locationManager.getLastKnownLocation(provider);
+            location = locationManager.getLastKnownLocation(provider);
         }
 
         // Initialize the location fields
@@ -104,9 +92,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             latituteField.setText("Location not available");
             longitudeField.setText("Location not available");
         }
-        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+        //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
+        //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
+        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         addTiles();
+    }
+
+    public void okayBattery(){
+        TextView text = findViewById(R.id.help);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            locationManager.requestLocationUpdates(provider, 400, 1, this);
+            text.setText("Battery okay");
+            Toast.makeText(context, "Battery is Okay", Toast.LENGTH_SHORT).show();
+        }
+    }
+    public void lowBattery(){
+        TextView text = findViewById(R.id.help);
+        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            locationManager.requestLocationUpdates(provider, 1000, 1, this);
+            text.setText("Battery low");
+            Toast.makeText(context, "Battery is Low", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void addTiles(){
