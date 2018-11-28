@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/main_side"
+        android:title="Main"
+        android:icon="@drawable/star"/>
+    <item
+        android:id="@+id/map_side"
+        android:title="Map"
+        android:icon="@drawable/map"/>
+    <item
+        android:id="@+id/social_side"
+        android:title="Social"
+        android:icon="@drawable/social"/>
+    <item
+        android:id="@+id/setting_side"
+        android:title="Settings"
+        android:icon="@drawable/setting"/>
+</menu>

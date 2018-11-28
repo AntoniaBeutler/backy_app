@@ -12,15 +12,10 @@ import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.provider.Settings;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.MenuItem;
-import android.view.View;
-import android.widget.PopupMenu;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -28,17 +23,14 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements LocationListener {
 
-    private FloatingActionButton button;
     private Context context;
 
     private RecyclerView mRecyclerView;
-   // private RecyclerView.Adapter mAdapter;
     private MyAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
 
     List<Tile> tile_List = new ArrayList<>();
 
-    private TextView latituteField, longitudeField;
     private LocationManager locationManager;
     private String provider;
     private Location location;
@@ -66,8 +58,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        latituteField = findViewById(R.id.lat);
-        longitudeField = findViewById(R.id.longi);
+        context = getApplicationContext();
 
         // Get the location manager
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -86,73 +77,39 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
         // Initialize the location fields
         if (location != null) {
-            //Toast.makeText(context,"Provider " + provider + " has been selected.",Toast.LENGTH_SHORT).show();
             onLocationChanged(location);
         } else {
-            latituteField.setText("Location not available");
-            longitudeField.setText("Location not available");
+
         }
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        addTiles();
+
+        tile_List.add(new Tile("Add POI"));
+
+        mRecyclerView = findViewById(R.id.my_recycler_view);
+        mRecyclerView.setHasFixedSize(true);
+
+        mLayoutManager = new GridLayoutManager(context,2);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+        mAdapter = new MyAdapter(context, tile_List, location, mRecyclerView);
+        mRecyclerView.setAdapter(mAdapter);
+
+
     }
 
     public void okayBattery(){
-        TextView text = findViewById(R.id.help);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             locationManager.requestLocationUpdates(provider, 400, 1, this);
-            text.setText("Battery okay");
             Toast.makeText(context, "Battery is Okay", Toast.LENGTH_SHORT).show();
         }
     }
     public void lowBattery(){
-        TextView text = findViewById(R.id.help);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             locationManager.requestLocationUpdates(provider, 1000, 1, this);
-            text.setText("Battery low");
             Toast.makeText(context, "Battery is Low", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    private void addTiles(){
-        context = getApplicationContext();
-        button = findViewById(R.id.button);
-        button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                //Creating the instance of PopupMenu
-                PopupMenu popup = new PopupMenu(MainActivity.this, button);
-                //Inflating the Popup using xml file
-                popup.getMenuInflater().inflate(R.menu.popup_menu, popup.getMenu());
-                //registering popup with OnMenuItemClickListener
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    public boolean onMenuItemClick(MenuItem item) {
-
-                        for (Tile t : tile_List){
-                            if (t.getTile_name().equals(item.getTitle().toString())){
-                                return true;
-                            }
-                        }
-                        tile_List.add(new Tile(item.getTitle().toString()));
-
-                        mRecyclerView = findViewById(R.id.my_recycler_view);
-                        // use this setting to improve performance if you know that changes
-                        // in content do not change the layout size of the RecyclerView
-                        mRecyclerView.setHasFixedSize(true);
-
-                        mLayoutManager = new GridLayoutManager(context,2);
-                        mRecyclerView.setLayoutManager(mLayoutManager);
-
-                        mAdapter = new MyAdapter(context, tile_List, location);
-                        mRecyclerView.setAdapter(mAdapter);
-
-                        return true;
-                    }
-                });
-                popup.show(); //showing popup menu
-            }
-        });
     }
 
     /* Request updates at startup */
@@ -174,11 +131,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onLocationChanged(Location location) {
-        int lat = (int) (location.getLatitude());
-        int lng = (int) (location.getLongitude());
-        latituteField.setText(String.valueOf(lat));
-        longitudeField.setText(String.valueOf(lng));
-
         if(mAdapter != null)
             mAdapter.setLocation(location);
     }

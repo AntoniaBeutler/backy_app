@@ -2,9 +2,9 @@ package com.backy.antoniabeutler.becky1;
 
 public class Tile {
 
-    int img_src;
-    String tile_name;
-    int distance;
+    private int img_src;
+    private String tile_name;
+    private int distance;
 
     public Tile(String tile_name){
 
@@ -17,6 +17,7 @@ public class Tile {
             case "Restaurant": this.img_src = R.drawable.restaurant; break;
             case "Train Station": this.img_src = R.drawable.railway; break;
             case "Bus Station": this.img_src = R.drawable.bus; break;
+            case "Add POI": this.img_src = R.drawable.add; break;
         }
 
         this.tile_name = tile_name;
