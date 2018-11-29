@@ -12,6 +12,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -41,6 +42,8 @@ public class MapActivity extends AppCompatActivity {
     Double longLocation, latLocation;
     Boolean noLocation = false;
 
+    public ArrayList<POI> poiList;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,17 +54,21 @@ public class MapActivity extends AppCompatActivity {
         longLocation = getIntent().getExtras().getDouble("longitudeLocation");
         latLocation = getIntent().getExtras().getDouble("latitudeLocation");
 
-        switch (poiType){
-            case "Campingside": poiType = "camp_side"; break;
-            //case "Water": poiType = "drinking_water"; break;
-            case "Train Station": poiType = "station"; break;
-        }
-
         mapfunc();
-        getPOIAsync(poiType);
+
+        poiList = MainActivity.mPois.get(poiType);
+        if(poiList.isEmpty())
+            Toast.makeText(getApplicationContext(),"List is empty",Toast.LENGTH_LONG).show();
+        else
+            Toast.makeText(getApplicationContext(),"List is not empty",Toast.LENGTH_LONG).show();
+        POIMap();
+
+        //getPOIAsync(poiType);
         //askPermission();
 
     }
+
+
 
     private void mapfunc(){
         Context ctx = getApplicationContext();
@@ -82,7 +89,7 @@ public class MapActivity extends AppCompatActivity {
             startPoint = new GeoPoint(latLocation, longLocation);
         }
 
-        homepoint = startPoint;
+        //homepoint = startPoint;
 
         mapController.setCenter(homepoint);
         Marker startMarker = new Marker(map);
@@ -94,58 +101,32 @@ public class MapActivity extends AppCompatActivity {
         startMarker.setTitle("Start point");
         map.invalidate();
     }
-    private class POILoadingTask extends AsyncTask<String, Void, ArrayList<POI>> {
-        String mFeatureTag;
-        String message;
-        protected ArrayList<POI> doInBackground(String... params) {
 
-            mFeatureTag = params[0];
-            BoundingBox bb = map.getBoundingBox();
-            GeoPoint p=homepoint;
-            double maxDistance = 0.1;
-            bb = new BoundingBox(p.getLatitude()+maxDistance,
-                    p.getLongitude()+maxDistance,
-                    p.getLatitude()-maxDistance,
-                    p.getLongitude()-maxDistance);
+    public void POIMap(){
 
-            //String osmTag = getOSMTag(mFeatureTag);
-            String osmTag = mFeatureTag;
-            if (osmTag == null){
-                message = mFeatureTag + " is not a valid feature.";
-                return null;
+        FolderOverlay poiMarkers = new FolderOverlay(getApplicationContext());
+        map.getOverlays().add(poiMarkers);
+
+
+        //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
+
+        for (POI poi:poiList){
+            Marker poiMarker = new Marker(map);
+            poiMarker.setTitle(poi.mType);
+            poiMarker.setSnippet(poi.mDescription);
+            poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(homepoint))+ " m");
+            poiMarker.setPosition(poi.mLocation);
+            //poiMarker.setIcon(poiIcon);
+            if (poi.mThumbnail != null){
+                poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
             }
-            NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
-            ArrayList<POI> pois = poiProvider.getPOICloseTo(homepoint, mFeatureTag, 10, maxDistance);
-
-            return pois;
+            poiMarkers.add(poiMarker);
         }
-        protected void onPostExecute(ArrayList<POI> pois) {
-            FolderOverlay poiMarkers = new FolderOverlay(getApplicationContext());
-            map.getOverlays().add(poiMarkers);
+        map.invalidate();
 
-
-            //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
-            for (POI poi:pois){
-
-                Marker poiMarker = new Marker(map);
-                poiMarker.setTitle(poi.mType);
-                poiMarker.setSnippet(poi.mDescription);
-                poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(homepoint))+ " m");
-                poiMarker.setPosition(poi.mLocation);
-                //poiMarker.setIcon(poiIcon);
-                if (poi.mThumbnail != null){
-                    poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
-                }
-                poiMarkers.add(poiMarker);
-            }
-            map.invalidate();
-        }
 
     }
-    void getPOIAsync(String tag){
-        //mPoiMarkers.getItems().clear();
-        new POILoadingTask().execute(tag);
-    }
+
     private void askPermission(){
         /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {

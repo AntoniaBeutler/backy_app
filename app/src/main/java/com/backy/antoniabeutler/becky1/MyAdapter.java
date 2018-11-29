@@ -17,6 +17,8 @@ import android.widget.Toast;
 
 import java.util.List;
 
+import static com.backy.antoniabeutler.becky1.MainActivity.mPois;
+
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     private static List<Tile> mDataset;
     public static Context context;
@@ -125,7 +127,13 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                     notifyItemRangeChanged(position, getItemCount());
                 }
             });
-            holder.distance.setText(latitude + " + " + longitude);
+            String s;
+            if(!MainActivity.shortestdistance.containsKey(mDataset.get(position).getTile_name())){
+               s = "nothing found";
+            }else{
+                s = Double.toString(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()));
+            }
+            holder.distance.setText(s);
         }
 
     }

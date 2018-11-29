@@ -6,11 +6,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.BatteryManager;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
@@ -27,12 +29,29 @@ import com.backy.antoniabeutler.becky1.fragment.MapFragment;
 import com.backy.antoniabeutler.becky1.fragment.SettingFragment;
 import com.backy.antoniabeutler.becky1.fragment.SocialFragment;
 
+import org.osmdroid.bonuspack.location.NominatimPOIProvider;
+import org.osmdroid.bonuspack.location.POI;
+import org.osmdroid.util.BoundingBox;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.util.GeoPoint;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+
 public class MainActivity extends AppCompatActivity implements LocationListener, MapFragment.OnFragmentInteractionListener, SocialFragment.OnFragmentInteractionListener, MainFragment.OnFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
 
     private LocationManager locationManager;
     private String provider;
     private Location location;
     private MyAdapter mAdapter;
+
+
+    public static HashMap<String,ArrayList<POI>> mPois = new HashMap<String,ArrayList<POI>>();
+    public static GeoPoint homepoint = new GeoPoint(51.029585,13.7455735);
+    public static HashMap<String, Double> shortestdistance = new HashMap<>();
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
@@ -126,6 +145,17 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        Toast.makeText(getApplicationContext(),"Hallo",Toast.LENGTH_SHORT).show();
+        getPOIAsync("Campingside");
+        getPOIAsync("Train Station");
+        getPOIAsync("Water");
+        getPOIAsync("Restaurant");
+        getPOIAsync("Hotel");
+        getPOIAsync("Hostel");
+        getPOIAsync("Bus Station");
+        getPOIAsync("Supermarket");
+        Toast.makeText(getApplicationContext(),"Hallo2",Toast.LENGTH_SHORT).show();
+
     }
 
     private void loadFragment(Fragment fragment) {
@@ -194,4 +224,47 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void onProviderDisabled(String provider) {
 
     }
+
+    private class POILoadingTask extends AsyncTask<String, Void, ArrayList<POI>> {
+        String mFeatureTag;
+        String message;
+        protected ArrayList<POI> doInBackground(String... params) {
+
+            mFeatureTag = params[0];
+            String osmTag = mFeatureTag;
+            switch (mFeatureTag){
+                case "Campingside": osmTag = "camp_site"; break;
+                //case "Water": poiType = "drinking_water"; break;
+                case "Train Station": osmTag = "station"; break;
+                case "Bus Station": osmTag = "bus_station"; break;
+            }
+
+            double maxDistance = 0.1;
+            //String osmTag = getOSMTag(mFeatureTag);
+
+            NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
+            ArrayList<POI> pois = poiProvider.getPOICloseTo(homepoint, osmTag, 10, maxDistance);
+            if(!pois.isEmpty()){
+                double dist = pois.get(0).mLocation.distanceToAsDouble(homepoint);
+                for(POI p : pois){
+                    double distP = p.mLocation.distanceToAsDouble(homepoint);
+                    if(distP < dist){
+                        dist = distP;
+                    }
+                }
+                shortestdistance.put(mFeatureTag,dist);
+            }
+            return pois;
+        }
+        protected void onPostExecute(ArrayList<POI> pois) {
+            mPois.put(mFeatureTag,pois);
+            Toast.makeText(getApplicationContext(),mFeatureTag,Toast.LENGTH_SHORT).show();
+        }
+
+    }
+    void getPOIAsync(String tag){
+        //mPoiMarkers.getItems().clear();
+        new POILoadingTask().execute(tag);
+    }
+
 }
