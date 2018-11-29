@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
     private String provider;
     private Location location;
     private SQLiteDatabaseHandler db;
+    private User user;
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
@@ -68,7 +69,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         setContentView(R.layout.activity_main);
 
         db = new SQLiteDatabaseHandler(this);
-        addUser(1,"FirstUser","default");
+        user = new User(1,"FirstUser","default");
+        db.addUser(user);
 
         latituteField = findViewById(R.id.lat);
         longitudeField = findViewById(R.id.longi);
@@ -101,6 +103,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 
         addTiles();
+
+        /*if(db.allUsers() == null)
+            Toast.makeText(context,"Hallo Null", Toast.LENGTH_SHORT).show();
+        else
+            Toast.makeText(context,"JAAAA", Toast.LENGTH_SHORT).show();*/
     }
 
     public void okayBattery(){
@@ -159,6 +166,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
             }
         });
     }
+
+
 
     /* Request updates at startup */
     @Override

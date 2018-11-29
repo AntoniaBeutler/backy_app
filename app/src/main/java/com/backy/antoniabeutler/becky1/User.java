@@ -7,8 +7,6 @@ import java.util.List;
 public class User {
     private int id;
     private String name;
-    private List<Tile> tile_List;
-    private Location homeLocation;
     private Boolean hotel;
     private Boolean hostel;
     private Boolean campsite;
@@ -18,8 +16,14 @@ public class User {
     private Boolean bus;
     private Boolean train;
     private String password;
+    private double longitude;
+    private double latitude;
+    private String location;
+    private String email;
 
-    public User(int id,String name,String password) {
+
+
+    public User(int id, String name, String password) {
         this.id = id;
         this.name = name;
         this.password = password;
@@ -31,37 +35,10 @@ public class User {
         supermarket = false;
         bus = false;
         train = false;
-    }
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-
-    public List<Tile> getTile_List() {
-        return tile_List;
-    }
-
-    public void setTile_List(List<Tile> tile_List) {
-        this.tile_List = tile_List;
-    }
-
-    public Location getHomeLocation() {
-        return homeLocation;
-    }
-
-    public void setHomeLocation(Location homeLocation) {
-        this.homeLocation = homeLocation;
+        location = "";
+        email = "";
+        longitude = 0;
+        latitude = 0;
     }
 
     public int getId() {
@@ -71,6 +48,15 @@ public class User {
     public void setId(int id) {
         this.id = id;
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public Boolean getHotel() {
         return hotel;
     }
@@ -135,11 +121,50 @@ public class User {
         this.train = train;
     }
 
+    public String getPassword() {
+        return password;
+    }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
+    public double getLongitude() {
+        return longitude;
+    }
 
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
 
+    public double getLatitude() {
+        return latitude;
+    }
 
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
 
+    public String getLocation() {
+        return location;
+    }
 
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "name='" + name + '\'' +
+                '}';
+    }
 }

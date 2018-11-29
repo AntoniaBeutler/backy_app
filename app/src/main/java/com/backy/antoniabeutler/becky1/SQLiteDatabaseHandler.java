@@ -13,8 +13,8 @@ import java.util.List;
 public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
-    private static final String DATABASE_NAME = "AppUser";
-    private static final String TABLE_NAME = "User";
+    private static final String DATABASE_NAME = "AppUserDatabase";
+    private static final String TABLE_NAME = "UserTable";
     private static final String KEY_ID = "id";
     private static final String KEY_NAME = "name";
     private static final String KEY_PASSWORD = "password";
@@ -26,8 +26,13 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_SUPERMARKET = "supermarket";
     private static final String KEY_BUS = "bus";
     private static final String KEY_TRAIN = "train";
+    private static final String KEY_LONGITUDE = "longitude";
+    private static final String KEY_LATITUDE = "latitude";
+    private static final String KEY_LOCATION = "location";
+    private static final String KEY_EMAIL = "email";
 
-    private static final String[] COLUMNS = { KEY_ID, KEY_NAME, KEY_PASSWORD,KEY_HOTEL,KEY_HOSTEL, KEY_CAMPSITE,KEY_WATER,KEY_RESTAURANT,KEY_SUPERMARKET,KEY_BUS,KEY_TRAIN};
+    private static final String[] COLUMNS = { KEY_ID, KEY_NAME, KEY_PASSWORD,KEY_HOTEL,KEY_HOSTEL, KEY_CAMPSITE,KEY_WATER,KEY_RESTAURANT
+            ,KEY_SUPERMARKET,KEY_BUS,KEY_TRAIN,KEY_LONGITUDE,KEY_LATITUDE,KEY_LOCATION,KEY_EMAIL};
 
     public SQLiteDatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -38,7 +43,7 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT, " + "name TEXT, "
                 + "password TEXT, " + "hotel INTEGER, " + "hostel INTEGER, " + "campsite INTEGER, " +
                 "water INTEGER, " + "restaurant INTEGER, " + "supermarket INTEGER, " +
-                "bus INTEGER, " + "train INTEGER )";
+                "bus INTEGER, " + "train INTEGER, "+"longitude REAL, "+"latitude REAL, "+"location INTEGER, "+"email TEXT )";
 
         db.execSQL(CREATION_TABLE);
     }
@@ -79,6 +84,10 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         user.setSupermarket(intToBool(Integer.parseInt(cursor.getString(8))));
         user.setBus(intToBool(Integer.parseInt(cursor.getString(9))));
         user.setTrain(intToBool(Integer.parseInt(cursor.getString(10))));
+        user.setLongitude(Double.parseDouble(cursor.getString(11)));
+        user.setLatitude(Double.parseDouble(cursor.getString(12)));
+        user.setLocation(cursor.getString(13));
+        user.setEmail(cursor.getString(14));
 
 
         return user;
@@ -104,6 +113,10 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
                 user.setSupermarket(intToBool(Integer.parseInt(cursor.getString(8))));
                 user.setBus(intToBool(Integer.parseInt(cursor.getString(9))));
                 user.setTrain(intToBool(Integer.parseInt(cursor.getString(10))));
+                user.setLongitude(Double.parseDouble(cursor.getString(11)));
+                user.setLatitude(Double.parseDouble(cursor.getString(12)));
+                user.setLocation(cursor.getString(13));
+                user.setEmail(cursor.getString(14));
 
 
                 users.add(user);
@@ -127,6 +140,12 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_TRAIN,boolToInt(user.getTrain()));
         values.put(KEY_CAMPSITE,boolToInt(user.getCampsite()));
 
+        values.put(KEY_LONGITUDE,user.getLongitude());
+        values.put(KEY_LATITUDE,user.getLatitude());
+        values.put(KEY_LOCATION,user.getLocation());
+        values.put(KEY_EMAIL,user.getEmail());
+
+
         // insert
         db.insert(TABLE_NAME,null, values);
         db.close();
@@ -145,6 +164,10 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         values.put(KEY_BUS,boolToInt(user.getBus()));
         values.put(KEY_TRAIN,boolToInt(user.getTrain()));
         values.put(KEY_CAMPSITE,boolToInt(user.getCampsite()));
+        values.put(KEY_LONGITUDE,user.getLongitude());
+        values.put(KEY_LATITUDE,user.getLatitude());
+        values.put(KEY_LOCATION,user.getLocation());
+        values.put(KEY_EMAIL,user.getEmail());
 
         int i = db.update(TABLE_NAME, // table
                 values, // column/value
