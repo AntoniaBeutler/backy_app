@@ -39,12 +39,14 @@ public class MapActivity extends AppCompatActivity {
     GeoPoint homepoint =new GeoPoint(51.029585,13.7455735);
     String poiType;
     Double longLocation, latLocation;
+    Boolean noLocation = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.map_activity);
 
+        noLocation = getIntent().getExtras().getBoolean("noLocation");
         poiType = getIntent().getExtras().getString("type");
         longLocation = getIntent().getExtras().getDouble("longitudeLocation");
         latLocation = getIntent().getExtras().getDouble("latitudeLocation");
@@ -54,7 +56,6 @@ public class MapActivity extends AppCompatActivity {
             //case "Water": poiType = "drinking_water"; break;
             case "Train Station": poiType = "station"; break;
         }
-
 
         mapfunc();
         getPOIAsync(poiType);
@@ -75,7 +76,7 @@ public class MapActivity extends AppCompatActivity {
         mapController.setZoom(14);
 
         GeoPoint startPoint;
-        if((latLocation == null)|| (longLocation == null)){
+        if(noLocation){
             startPoint = homepoint;
         }else{
             startPoint = new GeoPoint(latLocation, longLocation);

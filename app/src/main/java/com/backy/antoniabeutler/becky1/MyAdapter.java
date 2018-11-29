@@ -20,7 +20,7 @@ import java.util.List;
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     private static List<Tile> mDataset;
     public static Context context;
-    public static Location location;
+    public static Double longitude, latitude;
     public static RecyclerView recView;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
@@ -56,7 +56,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                                 }
                                 mDataset.add(new Tile(item.getTitle().toString()));
 
-                                MyAdapter mAdapter = new MyAdapter(context, mDataset, location, recView);
+                                MyAdapter mAdapter = new MyAdapter(context, mDataset, latitude, longitude, recView);
                                 recView.setAdapter(mAdapter);
 
                                 return true;
@@ -67,11 +67,13 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                         Intent i = new Intent(context, MapActivity.class);
                         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         i.putExtra("type", info_text.getText().toString());
-                        if (location != null){
-                            i.putExtra("longitudeLocation", location.getLongitude());
-                            i.putExtra("latitudeLocation", location.getLatitude());
+                        if ((longitude != null)||(latitude != null)){
+                            i.putExtra("longitudeLocation", longitude);
+                            i.putExtra("latitudeLocation", latitude);
+                            i.putExtra("noLocation", false);
                         } else  {
                             Toast.makeText(context, "No GPS signal found. Try it later.", Toast.LENGTH_LONG).show();
+                            i.putExtra("noLocation", true);
                         }
                         context.startActivity(i);
                     }
@@ -81,15 +83,17 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public MyAdapter(Context context, List<Tile> myDataset, Location location, RecyclerView recView) {
+    public MyAdapter(Context context, List<Tile> myDataset, Double latitude, Double longitude, RecyclerView recView) {
         mDataset = myDataset;
         this.context = context;
-        this.location = location;
+        this.latitude = latitude;
+        this.longitude = longitude;
         this.recView = recView;
     }
 
-    public void setLocation(Location location){
-        this.location = location;
+    public void setLocation(Double latitude, Double longitude){
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 
     // Create new views (invoked by the layout manager)
@@ -121,6 +125,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                     notifyItemRangeChanged(position, getItemCount());
                 }
             });
+            holder.distance.setText(latitude + " + " + longitude);
         }
 
     }

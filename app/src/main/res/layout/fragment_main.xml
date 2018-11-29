@@ -1,29 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:weightSum="10"
     android:background="#C0C0C0"
-    tools:context=".MainActivity">
+    tools:context=".fragment.MainFragment">
 
+    <!-- TODO: Update blank fragment layout -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:layout_weight="2">
+        android:layout_height="60dp"
+        android:layout_gravity="top"
+        android:background="#580C6D">
 
         <TextView
             android:id="@+id/textGrid"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="20dp"
-            android:layout_marginTop="14dp"
-            android:layout_marginEnd="100dp"
+            android:layout_marginTop="10dp"
+            android:gravity="start"
             android:text="Backy"
-            android:textColor="@android:color/black"
+            android:textColor="#ffffff"
             android:textSize="30sp" />
 
     </RelativeLayout>
@@ -31,23 +30,13 @@
     <android.support.v7.widget.RecyclerView xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/my_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="520dp"
+        android:layout_height="match_parent"
+        android:layout_marginTop="60dp"
+        android:layout_gravity="bottom"
         android:scrollbars="vertical"
         tools:layoutManager="GridLayoutManager"
         tools:listitem="@layout/card_view"
         tools:spanCount="2" />
 
 
-
-    <android.support.design.widget.BottomNavigationView
-        android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_weight="2"
-        android:clipChildren="false"
-        android:background="#808080"
-        android:layout_gravity="bottom"
-        app:labelVisibilityMode="labeled"
-        app:menu="@menu/navigation_menu" />
-
-</LinearLayout>
-
+</FrameLayout>

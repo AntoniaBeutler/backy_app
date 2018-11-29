@@ -10,39 +10,33 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.BatteryManager;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
+import android.support.design.widget.BottomNavigationView;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
+import android.view.MenuItem;
 import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.backy.antoniabeutler.becky1.fragment.MainFragment;
+import com.backy.antoniabeutler.becky1.fragment.MapFragment;
+import com.backy.antoniabeutler.becky1.fragment.SettingFragment;
+import com.backy.antoniabeutler.becky1.fragment.SocialFragment;
 
-public class MainActivity extends AppCompatActivity implements LocationListener {
-
-    private Context context;
-
-    private RecyclerView mRecyclerView;
-    private MyAdapter mAdapter;
-    private RecyclerView.LayoutManager mLayoutManager;
-
-    List<Tile> tile_List = new ArrayList<>();
+public class MainActivity extends AppCompatActivity implements LocationListener, MapFragment.OnFragmentInteractionListener, SocialFragment.OnFragmentInteractionListener, MainFragment.OnFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
 
     private LocationManager locationManager;
     private String provider;
     private Location location;
+    private MyAdapter mAdapter;
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            /*boolean batteryLow = intent.getAction().equals(Intent.ACTION_BATTERY_LOW);
-            if(batteryLow) lowBattery();
-            boolean batteryOkay = intent.getAction().equals(Intent.ACTION_BATTERY_OKAY);
-            if(batteryOkay) okayBattery();*/
-
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             if(level < 30) {
                 lowBattery();
@@ -52,23 +46,71 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         }
     };
 
+    private BottomNavigationView.OnNavigationItemSelectedListener navItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
+            Fragment fragment;
+            Bundle args;
+            switch (menuItem.getItemId()){
+                case R.id.main_side:
+                    args = new Bundle();
+                    fragment = new MainFragment();
+                    if (location != null){
+                        args.putDouble("latitude", location.getLatitude());
+                        args.putDouble("longitude", location.getLongitude());
+                        fragment.setArguments(args);
+                    }
+                    loadFragment(fragment);
+                    return true;
+                case R.id.map_side:
+                    args = new Bundle();
+                    fragment = new MapFragment();
+                    if (location != null){
+                        args.putDouble("latitude", location.getLatitude());
+                        args.putDouble("longitude", location.getLongitude());
+                        Toast.makeText(getApplicationContext(), "Na sieh mal einer an", Toast.LENGTH_SHORT).show();
+                        fragment.setArguments(args);
+                    }
+                    loadFragment(fragment);
+                    return true;
+                case R.id.social_side:
+                    fragment = new SocialFragment();
+                    loadFragment(fragment);
+                    return true;
+                case R.id.setting_side:
+                    fragment = new SettingFragment();
+                    loadFragment(fragment);
+                    return true;
+            }
+            return false;
+        }
+    };
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.main_activity);
 
-        context = getApplicationContext();
+        BottomNavigationView navigation = findViewById(R.id.navigation);
+        navigation.setOnNavigationItemSelectedListener(navItemSelectedListener);
 
-        // Get the location manager
+        Fragment frag = new MainFragment();
+        Bundle args = new Bundle();
+        if (location != null){
+            args.putDouble("latitude", location.getLatitude());
+            args.putDouble("longitude", location.getLongitude());
+            frag.setArguments(args);
+        }
+
+        loadFragment(frag);
+
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
             Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
             startActivity(intent);
         }
-        // Define the criteria how to select the location provider -> use
-        // default
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, false);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
@@ -84,31 +126,33 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+    }
 
-        tile_List.add(new Tile("Add POI"));
+    private void loadFragment(Fragment fragment) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.frame_container, fragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
+    }
 
-        mRecyclerView = findViewById(R.id.my_recycler_view);
-        mRecyclerView.setHasFixedSize(true);
+    @Override
+    public void onFragmentInteraction(Uri uri) {
 
-        mLayoutManager = new GridLayoutManager(context,2);
-        mRecyclerView.setLayoutManager(mLayoutManager);
+    }
 
-        mAdapter = new MyAdapter(context, tile_List, location, mRecyclerView);
-        mRecyclerView.setAdapter(mAdapter);
-
-
+    @Override
+    public void giveAdapter(MyAdapter adapter) {
+        this.mAdapter = adapter;
     }
 
     public void okayBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             locationManager.requestLocationUpdates(provider, 400, 1, this);
-            Toast.makeText(context, "Battery is Okay", Toast.LENGTH_SHORT).show();
         }
     }
     public void lowBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             locationManager.requestLocationUpdates(provider, 1000, 1, this);
-            Toast.makeText(context, "Battery is Low", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -131,8 +175,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onLocationChanged(Location location) {
-        if(mAdapter != null)
-            mAdapter.setLocation(location);
+        if(mAdapter != null) {
+            mAdapter.setLocation(location.getLatitude(), location.getLongitude());
+        }
     }
 
     @Override
@@ -142,15 +187,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener 
 
     @Override
     public void onProviderEnabled(String provider) {
-        Toast.makeText(this, "Enabled new provider " + provider,
-                Toast.LENGTH_SHORT).show();
+
     }
 
     @Override
     public void onProviderDisabled(String provider) {
-        Toast.makeText(this, "Disabled provider " + provider,
-                Toast.LENGTH_SHORT).show();
+
     }
-
-
 }
