@@ -3,12 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#C0C0C0"
     tools:context=".fragment.SocialFragment">
 
     <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="60dp"
+        android:layout_gravity="top"
+        android:background="#580C6D">
 
+        <TextView
+            android:id="@+id/textGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="10dp"
+            android:gravity="start"
+            android:text="Backy"
+            android:textColor="#ffffff"
+            android:textSize="30sp" />
+
+    </RelativeLayout>
 </FrameLayout>
