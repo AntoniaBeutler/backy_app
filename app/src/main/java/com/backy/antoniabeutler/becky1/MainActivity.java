@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private String provider;
     private Location lastLocation,lastPoiLocation;
     private MyAdapter mAdapter;
+    private Fragment mainF,mapF,socialF,settingF;
 
 
     public static HashMap<String,ArrayList<POI>> mPois = new HashMap<String,ArrayList<POI>>();
@@ -74,24 +75,25 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             switch (menuItem.getItemId()){
                 case R.id.main_side:
                     args = new Bundle();
-                    fragment = new MainFragment();
+                    if(mainF == null)
+                        mainF = new MainFragment();
                     if (lastLocation != null){
                         args.putDouble("latitude", lastLocation.getLatitude());
                         args.putDouble("longitude", lastLocation.getLongitude());
-                        fragment.setArguments(args);
+                        mainF.setArguments(args);
                     }
-                    loadFragment(fragment);
+                    loadFragment(mainF);
                     return true;
                 case R.id.map_side:
                     args = new Bundle();
-                    fragment = new MapFragment();
+                    mapF = new MapFragment();
                     if (lastLocation != null){
                         args.putDouble("latitude", lastLocation.getLatitude());
                         args.putDouble("longitude", lastLocation.getLongitude());
                         Toast.makeText(getApplicationContext(), "Na sieh mal einer an", Toast.LENGTH_SHORT).show();
-                        fragment.setArguments(args);
+                        mapF.setArguments(args);
                     }
-                    loadFragment(fragment);
+                    loadFragment(mapF);
                     return true;
                 case R.id.social_side:
                     fragment = new SocialFragment();
@@ -165,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         getPOIAsync("Supermarket");
     }
 
-    private void loadFragment(Fragment fragment) {
+    public void loadFragment(Fragment fragment) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.frame_container, fragment);
         transaction.addToBackStack(null);
@@ -224,6 +226,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 loadPois();
 
             }
+            if(mapF != null)
 
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
         }
@@ -279,7 +282,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
         protected void onPostExecute(ArrayList<POI> pois) {
             mPois.put(mFeatureTag,pois);
-            Toast.makeText(getApplicationContext(),mFeatureTag,Toast.LENGTH_SHORT).show();
         }
 
     }

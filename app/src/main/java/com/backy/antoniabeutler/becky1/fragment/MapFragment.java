@@ -11,10 +11,12 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.R;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -29,7 +31,7 @@ import org.osmdroid.views.overlay.Marker;
  * Use the {@link MapFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MapFragment extends Fragment {
+public class MapFragment extends Fragment implements MapEventsReceiver {
 
     MapView map = null;
     GeoPoint geoPoint /*=new GeoPoint(51.029585,13.7455735)*/;
@@ -104,6 +106,8 @@ public class MapFragment extends Fragment {
         startMarker.setTitle("Start point");
         map.invalidate();
 
+
+
         return view;
     }
 
@@ -133,6 +137,8 @@ public class MapFragment extends Fragment {
         }
     }
 
+    public void doThis(){}
+
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -142,6 +148,16 @@ public class MapFragment extends Fragment {
             throw new RuntimeException(context.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+    }
+
+    @Override
+    public boolean singleTapConfirmedHelper(GeoPoint p) {
+        return false;
+    }
+
+    @Override
+    public boolean longPressHelper(GeoPoint p) {
+        return false;
     }
 
     /**

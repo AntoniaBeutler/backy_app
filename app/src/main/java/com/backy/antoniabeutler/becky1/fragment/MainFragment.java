@@ -89,7 +89,7 @@ public class MainFragment extends Fragment {
 
         context = getContext();
 
-        tile_List.add(new Tile("Add POI"));
+        if(tile_List.isEmpty()) tile_List.add(new Tile("Add POI"));
 
         mRecyclerView = view.findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
