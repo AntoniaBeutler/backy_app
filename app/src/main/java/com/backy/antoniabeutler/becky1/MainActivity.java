@@ -45,12 +45,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     private LocationManager locationManager;
     private String provider;
-    private Location location;
+    private Location lastLocation,lastPoiLocation;
     private MyAdapter mAdapter;
 
 
     public static HashMap<String,ArrayList<POI>> mPois = new HashMap<String,ArrayList<POI>>();
     public static GeoPoint homepoint = new GeoPoint(51.029585,13.7455735);
+    protected static boolean useLoc = false;
     public static HashMap<String, Double> shortestdistance = new HashMap<>();
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
@@ -74,9 +75,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 case R.id.main_side:
                     args = new Bundle();
                     fragment = new MainFragment();
-                    if (location != null){
-                        args.putDouble("latitude", location.getLatitude());
-                        args.putDouble("longitude", location.getLongitude());
+                    if (lastLocation != null){
+                        args.putDouble("latitude", lastLocation.getLatitude());
+                        args.putDouble("longitude", lastLocation.getLongitude());
                         fragment.setArguments(args);
                     }
                     loadFragment(fragment);
@@ -84,9 +85,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 case R.id.map_side:
                     args = new Bundle();
                     fragment = new MapFragment();
-                    if (location != null){
-                        args.putDouble("latitude", location.getLatitude());
-                        args.putDouble("longitude", location.getLongitude());
+                    if (lastLocation != null){
+                        args.putDouble("latitude", lastLocation.getLatitude());
+                        args.putDouble("longitude", lastLocation.getLongitude());
                         Toast.makeText(getApplicationContext(), "Na sieh mal einer an", Toast.LENGTH_SHORT).show();
                         fragment.setArguments(args);
                     }
@@ -116,9 +117,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         Fragment frag = new MainFragment();
         Bundle args = new Bundle();
-        if (location != null){
-            args.putDouble("latitude", location.getLatitude());
-            args.putDouble("longitude", location.getLongitude());
+        if (lastLocation != null){
+            args.putDouble("latitude", lastLocation.getLatitude());
+            args.putDouble("longitude", lastLocation.getLongitude());
             frag.setArguments(args);
         }
 
@@ -133,19 +134,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, false);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            location = locationManager.getLastKnownLocation(provider);
+            lastLocation = locationManager.getLastKnownLocation(provider);
         }
 
         // Initialize the location fields
-        if (location != null) {
-            onLocationChanged(location);
+        if (lastLocation != null) {
+            onLocationChanged(lastLocation);
         } else {
-
+            loadPois();
         }
+
+        if(lastPoiLocation != null) useLoc =true;
+
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
         Toast.makeText(getApplicationContext(),"Hallo",Toast.LENGTH_SHORT).show();
+
+        Toast.makeText(getApplicationContext(),"Hallo2",Toast.LENGTH_SHORT).show();
+
+    }
+    private void loadPois(){
         getPOIAsync("Campingside");
         getPOIAsync("Train Station");
         getPOIAsync("Water");
@@ -154,8 +163,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         getPOIAsync("Hostel");
         getPOIAsync("Bus Station");
         getPOIAsync("Supermarket");
-        Toast.makeText(getApplicationContext(),"Hallo2",Toast.LENGTH_SHORT).show();
-
     }
 
     private void loadFragment(Fragment fragment) {
@@ -182,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     }
     public void lowBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 1000, 1, this);
+            locationManager.requestLocationUpdates(provider, 2000, 1, this);
         }
     }
 
@@ -200,12 +207,24 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     protected void onPause() {
         super.onPause();
-        locationManager.removeUpdates(this);
+        //locationManager.removeUpdates(this);
     }
 
     @Override
     public void onLocationChanged(Location location) {
         if(mAdapter != null) {
+            lastLocation = location;
+            if(lastPoiLocation != null){
+                if(lastLocation.distanceTo(lastPoiLocation) > 100 ){
+                    lastPoiLocation = lastLocation;
+                    loadPois();
+                }
+            }else {
+                lastPoiLocation = lastLocation;
+                loadPois();
+
+            }
+
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
         }
     }
@@ -242,12 +261,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             double maxDistance = 0.1;
             //String osmTag = getOSMTag(mFeatureTag);
 
+            GeoPoint gp = (useLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): homepoint;
+
             NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
-            ArrayList<POI> pois = poiProvider.getPOICloseTo(homepoint, osmTag, 10, maxDistance);
+            ArrayList<POI> pois = poiProvider.getPOICloseTo(gp, osmTag, 10, maxDistance);
             if(!pois.isEmpty()){
-                double dist = pois.get(0).mLocation.distanceToAsDouble(homepoint);
+                double dist = pois.get(0).mLocation.distanceToAsDouble(gp);
                 for(POI p : pois){
-                    double distP = p.mLocation.distanceToAsDouble(homepoint);
+                    double distP = p.mLocation.distanceToAsDouble(gp);
                     if(distP < dist){
                         dist = distP;
                     }
@@ -263,7 +284,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     }
     void getPOIAsync(String tag){
-        //mPoiMarkers.getItems().clear();
+        if(mPois.containsKey(tag)) mPois.remove(tag);
         new POILoadingTask().execute(tag);
     }
 

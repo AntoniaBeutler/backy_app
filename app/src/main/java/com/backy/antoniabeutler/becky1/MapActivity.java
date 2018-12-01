@@ -6,7 +6,6 @@ import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.AsyncTask;
-import android.os.StrictMode;
 import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -19,22 +18,30 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.OnSuccessListener;
 
 import org.osmdroid.api.IMapController;
-import org.osmdroid.bonuspack.location.NominatimPOIProvider;
-import org.osmdroid.bonuspack.location.OverpassAPIProvider;
 import org.osmdroid.bonuspack.location.POI;
+import org.osmdroid.bonuspack.routing.OSRMRoadManager;
+import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.bonuspack.routing.RoadManager;
+import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.config.Configuration;
+import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
 
 import java.util.ArrayList;
 
-public class MapActivity extends AppCompatActivity {
+public class MapActivity extends AppCompatActivity implements MapEventsReceiver {
 
-    private FusedLocationProviderClient mFusedLocationClient;
+
+    protected FolderOverlay mRoadNodeMarkers;
+    protected DirectedLocationOverlay myLocationOverlay;
+    protected Polyline roadOverlay;
     MapView map = null;
     Location lastLocation = null;
     GeoPoint homepoint =new GeoPoint(51.029585,13.7455735);
@@ -82,23 +89,92 @@ public class MapActivity extends AppCompatActivity {
         IMapController mapController = map.getController();
         mapController.setZoom(14);
 
+        MapEventsOverlay overlay = new MapEventsOverlay(this);
+        map.getOverlays().add(overlay);
+
+        myLocationOverlay = new DirectedLocationOverlay(this);
+        map.getOverlays().add(myLocationOverlay);
+
+        mRoadNodeMarkers = new FolderOverlay();
+        mRoadNodeMarkers.setName("Route Steps");
+
+        //map.getOverlays().add(mRoadNodeMarkers);
+
         GeoPoint startPoint;
-        if(noLocation){
-            startPoint = homepoint;
+        if(!MainActivity.useLoc){
+            startPoint = MainActivity.homepoint;
         }else{
             startPoint = new GeoPoint(latLocation, longLocation);
         }
+        myLocationOverlay.setLocation(startPoint);
 
+        mapController.setCenter(startPoint);
         //homepoint = startPoint;
 
-        mapController.setCenter(homepoint);
+        /*mapController.setCenter(startPoint);
         Marker startMarker = new Marker(map);
-        startMarker.setPosition(homepoint);
+        startMarker.setPosition(startPoint);
         startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
         map.getOverlays().add(startMarker);
-        map.invalidate();
+        map.invalidate();*/
         //startMarker.setIcon(getResources().getDrawable(R.drawable.ic_launcher));
-        startMarker.setTitle("Start point");
+        //startMarker.setTitle("Start point");
+        map.invalidate();
+    }
+
+    private class roadTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road>{
+
+
+        @Override
+        protected Road doInBackground(ArrayList<GeoPoint>... params) {
+
+            ArrayList<GeoPoint> waypoints = params[0];
+            RoadManager roadManager = new OSRMRoadManager(getApplicationContext());
+            return roadManager.getRoad(waypoints);
+        }
+
+        protected void onPostExecute(Road result) {
+            route(result);
+        }
+    }
+
+
+    public void getRoadAsync(GeoPoint start, GeoPoint dest){
+        ArrayList<GeoPoint> waypoints = new ArrayList<>();
+        waypoints.add(start);
+        waypoints.add(dest);
+
+        new roadTask().execute(waypoints);
+    }
+
+    private void route(Road road){
+
+        mRoadNodeMarkers.getItems().clear();
+        map.getOverlays().remove(mRoadNodeMarkers);
+
+        if(roadOverlay != null) map.getOverlays().remove(roadOverlay);
+        roadOverlay = RoadManager.buildRoadOverlay(road);
+        map.getOverlays().add(1,roadOverlay);
+        map.invalidate();
+
+        ///Drawable nodeIcon = getResources().getDrawable(R.drawable.marker_node);
+        for (int i=0; i<road.mNodes.size(); i++){
+            RoadNode node = road.mNodes.get(i);
+            Marker nodeMarker = new Marker(map);
+            nodeMarker.setPosition(node.mLocation);
+            //nodeMarker.setIcon(nodeIcon);
+            nodeMarker.setTitle("Step "+i);
+
+            nodeMarker.setSnippet(node.mInstructions);
+            nodeMarker.setSubDescription(Road.getLengthDurationText(this, node.mLength, node.mDuration));
+            //Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
+            //nodeMarker.setImage(icon);
+            mRoadNodeMarkers.add(nodeMarker);
+
+            //map.getOverlays().add(nodeMarker);
+
+        }
+        map.getOverlays().add(mRoadNodeMarkers);
         map.invalidate();
     }
 
@@ -106,6 +182,8 @@ public class MapActivity extends AppCompatActivity {
 
         FolderOverlay poiMarkers = new FolderOverlay(getApplicationContext());
         map.getOverlays().add(poiMarkers);
+
+
 
 
         //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
@@ -127,80 +205,6 @@ public class MapActivity extends AppCompatActivity {
 
     }
 
-    private void askPermission(){
-        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.READ_CONTACTS},1);
-            // Permission is not granted
-        }*/
-
-        // Here, thisActivity is the current activity
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION)
-                != PackageManager.PERMISSION_GRANTED) {
-
-            // Permission is not granted
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-            } else {
-                // No explanation needed; request the permission
-                ActivityCompat.requestPermissions(this,
-                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-                        1);
-
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
-            }
-        } else {
-            getLocation();
-            // Permission has already been granted
-        }
-
-    }
-
-    @SuppressWarnings("MissingPermission")
-    private void getLocation(){
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        mFusedLocationClient.getLastLocation()
-                .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                    @Override
-                    public void onSuccess(Location location) {
-                        // Got last known location. In some rare situations this can be null.
-                        if (location != null) {
-                            // Logic to handle location object
-                        }
-                        lastLocation= location;
-                    }
-                });
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case 1: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getLocation();
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
-                } else {
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
-                }
-                return;
-            }
-
-            // other 'case' lines to check for other
-            // permissions this app might request.
-        }
-    }
-
    public void onResume(){
         super.onResume();
         //this will refresh the osmdroid configuration on resuming.
@@ -217,5 +221,18 @@ public class MapActivity extends AppCompatActivity {
         //SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         //Configuration.getInstance().save(this, prefs);
         map.onPause();  //needed for compass, my location overlays, v6.0.0 and up
+    }
+
+    @Override
+    public boolean singleTapConfirmedHelper(GeoPoint p) {
+        Toast.makeText(this, "Tapped", Toast.LENGTH_SHORT).show();
+        return false;
+    }
+
+    @Override
+    public boolean longPressHelper(GeoPoint p) {
+        Toast.makeText(this, "Tapped long", Toast.LENGTH_LONG).show();
+        getRoadAsync(MainActivity.homepoint,p);
+        return false;
     }
 }
