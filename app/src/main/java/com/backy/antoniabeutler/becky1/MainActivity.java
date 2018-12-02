@@ -18,11 +18,11 @@ import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.backy.antoniabeutler.becky1.fragment.MainFragment;
 import com.backy.antoniabeutler.becky1.fragment.MapFragment;
@@ -31,15 +31,12 @@ import com.backy.antoniabeutler.becky1.fragment.SocialFragment;
 
 import org.osmdroid.bonuspack.location.NominatimPOIProvider;
 import org.osmdroid.bonuspack.location.POI;
-import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.overlay.FolderOverlay;
-import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.util.GeoPoint;
+
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
+import static com.backy.antoniabeutler.becky1.fragment.MapFragment.updateLocation;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, MapFragment.OnFragmentInteractionListener, SocialFragment.OnFragmentInteractionListener, MainFragment.OnFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
 
@@ -47,12 +44,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private String provider;
     private Location lastLocation,lastPoiLocation;
     private MyAdapter mAdapter;
-    private Fragment mainF,mapF,socialF,settingF;
+    public static Fragment mainF,mapF,socialF,settingF;
+    public static FragmentManager fragManager;
+    public static BottomNavigationView navigation;
 
 
     public static HashMap<String,ArrayList<POI>> mPois = new HashMap<String,ArrayList<POI>>();
     public static GeoPoint homepoint = new GeoPoint(51.029585,13.7455735);
-    protected static boolean useLoc = false;
+    public static boolean useLoc = false;
     public static HashMap<String, Double> shortestdistance = new HashMap<>();
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
@@ -67,41 +66,68 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
     };
 
+    private BottomNavigationView.OnNavigationItemReselectedListener navItemReselectedListener = new BottomNavigationView.OnNavigationItemReselectedListener() {
+
+        @Override
+        public void onNavigationItemReselected(@NonNull MenuItem menuItem) {
+
+        }
+    };
+
     private BottomNavigationView.OnNavigationItemSelectedListener navItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
         public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-            Fragment fragment;
+
             Bundle args;
             switch (menuItem.getItemId()){
                 case R.id.main_side:
                     args = new Bundle();
                     if(mainF == null)
                         mainF = new MainFragment();
-                    if (lastLocation != null){
-                        args.putDouble("latitude", lastLocation.getLatitude());
-                        args.putDouble("longitude", lastLocation.getLongitude());
-                        mainF.setArguments(args);
+                    if(mainF.isAdded()){
+                        return true;
+                    } else {
+
+                        if (lastLocation != null){
+                            args.putDouble("latitude", lastLocation.getLatitude());
+                            args.putDouble("longitude", lastLocation.getLongitude());
+                            mainF.setArguments(args);
+                        }
+                        loadFragment(mainF);
+                        return true;
                     }
-                    loadFragment(mainF);
-                    return true;
+
                 case R.id.map_side:
                     args = new Bundle();
-                    mapF = new MapFragment();
+                    if(mapF == null)
+                        mapF = new MapFragment();
+                    args.putString("poiType","nothing");
+                    if(mapF.isAdded())
+                        return true;
                     if (lastLocation != null){
                         args.putDouble("latitude", lastLocation.getLatitude());
                         args.putDouble("longitude", lastLocation.getLongitude());
-                        Toast.makeText(getApplicationContext(), "Na sieh mal einer an", Toast.LENGTH_SHORT).show();
-                        mapF.setArguments(args);
+                        args.putBoolean("locationAvailable",false);
+
+                    }else{
+                        args.putBoolean("locationAvailable",true);
                     }
+                    mapF.setArguments(args);
                     loadFragment(mapF);
                     return true;
                 case R.id.social_side:
-                    fragment = new SocialFragment();
-                    loadFragment(fragment);
+                    if(socialF == null)
+                        socialF = new SocialFragment();
+                    if(socialF.isAdded())
+                        return true;
+                    loadFragment(socialF);
                     return true;
                 case R.id.setting_side:
-                    fragment = new SettingFragment();
-                    loadFragment(fragment);
+                    if(settingF == null)
+                        settingF = new SettingFragment();
+                    if(settingF.isAdded())
+                        return true;
+                    loadFragment(settingF);
                     return true;
             }
             return false;
@@ -114,18 +140,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        BottomNavigationView navigation = findViewById(R.id.navigation);
+        fragManager = getSupportFragmentManager();
+
+
+        navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(navItemSelectedListener);
 
-        Fragment frag = new MainFragment();
-        Bundle args = new Bundle();
-        if (lastLocation != null){
-            args.putDouble("latitude", lastLocation.getLatitude());
-            args.putDouble("longitude", lastLocation.getLongitude());
-            frag.setArguments(args);
-        }
 
-        loadFragment(frag);
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
@@ -141,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         // Initialize the location fields
         if (lastLocation != null) {
+            useLoc = true;
             onLocationChanged(lastLocation);
         } else {
             loadPois();
@@ -148,12 +170,20 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         if(lastPoiLocation != null) useLoc =true;
 
+        Fragment frag = new MainFragment();
+        Bundle args = new Bundle();
+        if (lastLocation != null){
+            args.putDouble("latitude", lastLocation.getLatitude());
+            args.putDouble("longitude", lastLocation.getLongitude());
+            frag.setArguments(args);
+        }
+
+        loadFragment(frag);
+
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-        Toast.makeText(getApplicationContext(),"Hallo",Toast.LENGTH_SHORT).show();
 
-        Toast.makeText(getApplicationContext(),"Hallo2",Toast.LENGTH_SHORT).show();
 
     }
     private void loadPois(){
@@ -168,7 +198,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     }
 
     public void loadFragment(Fragment fragment) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        FragmentTransaction transaction = fragManager.beginTransaction();
+        transaction.add(fragment, "");
         transaction.replace(R.id.frame_container, fragment);
         transaction.addToBackStack(null);
         transaction.commit();
@@ -214,21 +245,29 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     public void onLocationChanged(Location location) {
+
         if(mAdapter != null) {
             lastLocation = location;
             if(lastPoiLocation != null){
                 if(lastLocation.distanceTo(lastPoiLocation) > 100 ){
                     lastPoiLocation = lastLocation;
                     loadPois();
+
                 }
             }else {
                 lastPoiLocation = lastLocation;
                 loadPois();
 
             }
-            if(mapF != null)
+            if(mapF != null) {
+                updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
 
+                //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
+            }
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
+
+            //mAdapter.notifyItemRangeChanged(0,mAdapter.getItemCount(), true);
+
         }
     }
 

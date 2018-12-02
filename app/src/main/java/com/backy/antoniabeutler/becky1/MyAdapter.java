@@ -3,6 +3,11 @@ package com.backy.antoniabeutler.becky1;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -13,17 +18,22 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import com.backy.antoniabeutler.becky1.fragment.MapFragment;
 
 import java.util.List;
 
 import static com.backy.antoniabeutler.becky1.MainActivity.mPois;
+import static com.backy.antoniabeutler.becky1.MainActivity.mapF;
+import static com.backy.antoniabeutler.becky1.MainActivity.navigation;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     private static List<Tile> mDataset;
     public static Context context;
     public static Double longitude, latitude;
     public static RecyclerView recView;
+    public static Fragment mFrag;
+    public static FragmentManager fragManager;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
         private TextView info_text, distance;
@@ -58,7 +68,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                                 }
                                 mDataset.add(new Tile(item.getTitle().toString()));
 
-                                MyAdapter mAdapter = new MyAdapter(context, mDataset, latitude, longitude, recView);
+                                MyAdapter mAdapter = new MyAdapter(context, mDataset, latitude, longitude, recView, fragManager);
                                 recView.setAdapter(mAdapter);
 
                                 return true;
@@ -66,18 +76,25 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                         });
                         popup.show(); //showing popup menu
                     } else {
-                        Intent i = new Intent(context, MapActivity.class);
-                        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        i.putExtra("type", info_text.getText().toString());
-                        if ((longitude != null)||(latitude != null)){
-                            i.putExtra("longitudeLocation", longitude);
-                            i.putExtra("latitudeLocation", latitude);
-                            i.putExtra("noLocation", false);
-                        } else  {
-                            Toast.makeText(context, "No GPS signal found. Try it later.", Toast.LENGTH_LONG).show();
-                            i.putExtra("noLocation", true);
+                        navigation.setSelectedItemId(R.id.map_side);
+                        if (mapF == null){
+                            mapF = new MapFragment();
                         }
-                        context.startActivity(i);
+                        Bundle args = new Bundle();
+                        if (latitude != null || longitude != null){
+                            args.putDouble("latitude", latitude);
+                            args.putDouble("longitude", longitude);
+                            args.putBoolean("locationAvailable", false);
+                        } else {
+                            args.putBoolean("locationAvailable", true);
+                        }
+                        args.putString("poiType", info_text.getText().toString());
+                        mapF.setArguments(args);
+
+                        FragmentTransaction transaction = fragManager.beginTransaction();
+                        transaction.replace(R.id.frame_container, mapF);
+                        transaction.addToBackStack(null);
+                        transaction.commit();
                     }
                 }
             });
@@ -85,17 +102,27 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     }
 
     // Provide a suitable constructor (depends on the kind of dataset)
-    public MyAdapter(Context context, List<Tile> myDataset, Double latitude, Double longitude, RecyclerView recView) {
+    public MyAdapter(Context context, List<Tile> myDataset, Double latitude, Double longitude, RecyclerView recView, FragmentManager fragManager) {
         mDataset = myDataset;
         this.context = context;
         this.latitude = latitude;
         this.longitude = longitude;
         this.recView = recView;
+        this.fragManager = fragManager;
     }
 
     public void setLocation(Double latitude, Double longitude){
         this.latitude = latitude;
         this.longitude = longitude;
+
+        for(Tile t : mDataset){
+            Double d = MainActivity.shortestdistance.get(t.getTile_name());
+            if(d != null)
+                t.setDistance(d);
+
+        }
+        notifyDataSetChanged();
+
     }
 
     // Create new views (invoked by the layout manager)
@@ -108,35 +135,45 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         return vh;
     }
 
+    @Override
+    public void onBindViewHolder(@NonNull MyViewHolder holder,final int position) {
+
+    }
+
     // Replace the contents of a view (invoked by the layout manager)
     @Override
-    public void onBindViewHolder(MyViewHolder holder, final int position) {
+    public void onBindViewHolder(MyViewHolder holder, final int position, List<Object> payload) {
+        if (payload.isEmpty()){
+            onBindViewHolder(holder, position);
+        }
+
         holder.mImage.setImageResource(mDataset.get(position).getImg_src());
         holder.info_text.setText(mDataset.get(position).getTile_name());
         if (mDataset.get(position).getTile_name().equals("Add POI")){
-            holder.delete.setVisibility(View.GONE);
-            holder.info_text.setVisibility(View.INVISIBLE);
-            holder.distance.setVisibility(View.INVISIBLE);
-        } else {
-            holder.info_text.setText(mDataset.get(position).getTile_name());
-            holder.delete.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    mDataset.remove(position);
-                    notifyItemRemoved(position);
-                    notifyItemRangeChanged(position, getItemCount());
-                }
-            });
-            String s;
-            if(!MainActivity.shortestdistance.containsKey(mDataset.get(position).getTile_name())){
-               s = "nothing found";
-            }else{
-                s = Double.toString(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()));
+        holder.delete.setVisibility(View.GONE);
+        holder.info_text.setVisibility(View.INVISIBLE);
+        holder.distance.setVisibility(View.INVISIBLE);
+    } else {
+        holder.info_text.setText(mDataset.get(position).getTile_name());
+        holder.delete.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mDataset.remove(position);
+                notifyItemRemoved(position);
+                notifyItemRangeChanged(position, getItemCount());
             }
-            holder.distance.setText(s);
+        });
+        String s;
+        if(!MainActivity.shortestdistance.containsKey(mDataset.get(position).getTile_name())){
+            s = "nothing found";
+        }else{
+            s = Double.toString(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()));
         }
-
+        holder.distance.setText(s);
     }
+
+}
+
 
 
 

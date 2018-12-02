@@ -1,9 +1,9 @@
 package com.backy.antoniabeutler.becky1.fragment;
 
 import android.content.Context;
-import android.location.Location;
-import android.location.LocationListener;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -15,12 +15,23 @@ import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.R;
 
 import org.osmdroid.api.IMapController;
+import org.osmdroid.bonuspack.location.POI;
+import org.osmdroid.bonuspack.routing.OSRMRoadManager;
+import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.bonuspack.routing.RoadManager;
+import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.FolderOverlay;
+import org.osmdroid.views.overlay.MapEventsOverlay;
 import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.views.overlay.Polyline;
+import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
+
+import java.util.ArrayList;
 
 
 /**
@@ -33,16 +44,27 @@ import org.osmdroid.views.overlay.Marker;
  */
 public class MapFragment extends Fragment implements MapEventsReceiver {
 
-    MapView map = null;
+    private static MapView map = null;
     GeoPoint geoPoint /*=new GeoPoint(51.029585,13.7455735)*/;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
+    private static final String ARG_PARAM3 = "param3";
+    private static final String ARG_PARAM4 = "param4";
 
     // TODO: Rename and change types of parameters
     private Double mLatitude, mLongitude;
+    private String poiType;
+    private Boolean locationAvailable;
+
+    public ArrayList<POI> poiList;
+    private static DirectedLocationOverlay myLocationOverlay;
+    protected FolderOverlay mRoadNodeMarkers;
+    protected Polyline roadOverlay;
+    protected GeoPoint startPoint;
+    private static IMapController mapController;
 
     private OnFragmentInteractionListener mListener;
 
@@ -59,11 +81,13 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
      * @return A new instance of fragment MapFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static MapFragment newInstance(String param1, String param2) {
+    public static MapFragment newInstance(String param1, String param2, String param3, String param4) {
         MapFragment fragment = new MapFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
+        args.putString(ARG_PARAM3, param3);
+        args.putString(ARG_PARAM4, param4);
         fragment.setArguments(args);
         return fragment;
     }
@@ -71,11 +95,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mLatitude = getArguments().getDouble("latitude");
-            mLongitude = getArguments().getDouble("longitude");
-            geoPoint = new GeoPoint(mLatitude, mLongitude);
-        }
     }
 
     @Override
@@ -84,33 +103,144 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_map, container, false);
 
+        if (getArguments() != null) {
+            mLatitude = getArguments().getDouble("latitude");
+            mLongitude = getArguments().getDouble("longitude");
+            String s = getArguments().getString("poiType");
+            if(!s.equals("nothing")){
+                poiType = s;
+            }
+
+            locationAvailable = getArguments().getBoolean("locationAvailable");
+            if(locationAvailable){
+                startPoint = MainActivity.homepoint;
+            }else{
+                startPoint = new GeoPoint(mLatitude, mLongitude);
+            }
+        }
+
         Configuration.getInstance().load(getContext(), PreferenceManager.getDefaultSharedPreferences(getContext()));
         map = view.findViewById(R.id.map2);
         map.setTileSource(TileSourceFactory.MAPNIK);
         map.setUseDataConnection(true);
         map.setBuiltInZoomControls(true);
         map.setMultiTouchControls(true);
-        IMapController mapController = map.getController();
+        mapController = map.getController();
         mapController.setZoom(14);
-        if (geoPoint == null){
-            geoPoint = new GeoPoint(51.029585,13.7455735);
+
+        MapEventsOverlay overlay = new MapEventsOverlay(this);
+        map.getOverlays().add(overlay);
+
+        myLocationOverlay = new DirectedLocationOverlay(getContext());
+        map.getOverlays().add(myLocationOverlay);
+
+        mRoadNodeMarkers = new FolderOverlay();
+        mRoadNodeMarkers.setName("Route Steps");
+
+        myLocationOverlay.setLocation(startPoint);
+
+        mapController.setCenter(startPoint);
+
+        map.invalidate();
+
+        if(poiType != null){
+            poiList = MainActivity.mPois.get(poiType);
+            POIMap();
         }
-        mapController.setCenter(geoPoint);
-        Marker startMarker = new Marker(map);
-        startMarker.setPosition(geoPoint);
-
-
-        startMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
-        map.getOverlays().add(startMarker);
-        map.invalidate();
-        startMarker.setTitle("Start point");
-        map.invalidate();
-
 
 
         return view;
     }
 
+    public static void updateLocation(GeoPoint startPoint){
+        myLocationOverlay.setLocation(startPoint);
+
+        mapController.setCenter(startPoint);
+
+        map.invalidate();
+
+    }
+
+
+    private class roadTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road> {
+
+
+        @Override
+        protected Road doInBackground(ArrayList<GeoPoint>... params) {
+
+            ArrayList<GeoPoint> wayPoints = params[0];
+            RoadManager roadManager = new OSRMRoadManager(getContext());
+            return roadManager.getRoad(wayPoints);
+        }
+
+        protected void onPostExecute(Road result) {
+            route(result);
+        }
+    }
+
+    public void getRoadAsync(GeoPoint start, GeoPoint dest){
+        ArrayList<GeoPoint> wayPoints = new ArrayList<>();
+        wayPoints.add(start);
+        wayPoints.add(dest);
+
+        new roadTask().execute(wayPoints);
+    }
+
+    private void route(Road road){
+
+        mRoadNodeMarkers.getItems().clear();
+        map.getOverlays().remove(mRoadNodeMarkers);
+
+        if(roadOverlay != null) map.getOverlays().remove(roadOverlay);
+        roadOverlay = RoadManager.buildRoadOverlay(road);
+        map.getOverlays().add(1,roadOverlay);
+        map.invalidate();
+
+        ///Drawable nodeIcon = getResources().getDrawable(R.drawable.marker_node);
+        for (int i=0; i<road.mNodes.size(); i++){
+            RoadNode node = road.mNodes.get(i);
+            Marker nodeMarker = new Marker(map);
+            nodeMarker.setPosition(node.mLocation);
+            //nodeMarker.setIcon(nodeIcon);
+            nodeMarker.setTitle("Step "+i);
+
+            nodeMarker.setSnippet(node.mInstructions);
+            nodeMarker.setSubDescription(Road.getLengthDurationText(getContext(), node.mLength, node.mDuration));
+            //Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
+            //nodeMarker.setImage(icon);
+            mRoadNodeMarkers.add(nodeMarker);
+
+            //map.getOverlays().add(nodeMarker);
+
+        }
+        map.getOverlays().add(mRoadNodeMarkers);
+        map.invalidate();
+    }
+
+    public void POIMap(){
+
+        FolderOverlay poiMarkers = new FolderOverlay(getContext());
+        map.getOverlays().add(poiMarkers);
+
+        //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
+        if (poiList != null){
+            for (POI poi:poiList){
+                Marker poiMarker = new Marker(map);
+                poiMarker.setTitle(poi.mType);
+                poiMarker.setSnippet(poi.mDescription);
+                poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(startPoint))+ " m");
+                poiMarker.setPosition(poi.mLocation);
+                //poiMarker.setIcon(poiIcon);
+                if (poi.mThumbnail != null){
+                    poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
+                }
+                poiMarkers.add(poiMarker);
+            }
+        }
+        map.invalidate();
+
+
+    }
 
     public void onResume(){
         super.onResume();
@@ -157,6 +287,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
     @Override
     public boolean longPressHelper(GeoPoint p) {
+        getRoadAsync(startPoint,p);
         return false;
     }
 

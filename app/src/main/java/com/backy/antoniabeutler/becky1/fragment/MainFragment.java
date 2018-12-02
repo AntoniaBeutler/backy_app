@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.MyAdapter;
 import com.backy.antoniabeutler.becky1.R;
 import com.backy.antoniabeutler.becky1.Tile;
@@ -97,7 +98,7 @@ public class MainFragment extends Fragment {
         mLayoutManager = new GridLayoutManager(context,2);
         mRecyclerView.setLayoutManager(mLayoutManager);
 
-        mAdapter = new MyAdapter(context, tile_List, mLatitude, mLongitude , mRecyclerView);
+        mAdapter = new MyAdapter(context, tile_List, mLatitude, mLongitude , mRecyclerView, MainActivity.fragManager);
         try{
             ((OnFragmentInteractionListener) context).giveAdapter(mAdapter);
         } catch (ClassCastException e){ }

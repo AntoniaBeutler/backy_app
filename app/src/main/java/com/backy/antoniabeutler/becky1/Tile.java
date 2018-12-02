@@ -4,7 +4,7 @@ public class Tile {
 
     private int img_src;
     private String tile_name;
-    private int distance;
+    private double distance;
 
     public Tile(String tile_name){
 
@@ -28,4 +28,12 @@ public class Tile {
         return tile_name;
     }
     public int getImg_src() {return img_src;}
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
 }
