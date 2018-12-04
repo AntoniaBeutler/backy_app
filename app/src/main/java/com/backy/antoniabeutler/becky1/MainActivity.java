@@ -179,15 +179,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         if(lastPoiLocation != null) useLoc =true;
 
-        Fragment frag = new MainFragment();
+        mainF = new MainFragment();
         Bundle args = new Bundle();
         if (lastLocation != null){
             args.putDouble("latitude", lastLocation.getLatitude());
             args.putDouble("longitude", lastLocation.getLongitude());
-            frag.setArguments(args);
+            mainF.setArguments(args);
         }
 
-        loadFragment(frag);
+        loadFragment(mainF);
 
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));

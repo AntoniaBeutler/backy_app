@@ -12,7 +12,6 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.R;
@@ -232,7 +231,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         cursor.moveToFirst();
 
         poi_image = cursor.getInt(cursor.getColumnIndex("image_res_id"));
-        Toast.makeText(getContext(),poi_image, Toast.LENGTH_SHORT).show();
 
         Drawable poiIcon = getDrawable(getContext(), poi_image);
         if (poiList != null){
