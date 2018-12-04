@@ -23,6 +23,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.backy.antoniabeutler.becky1.fragment.MainFragment;
 import com.backy.antoniabeutler.becky1.fragment.MapFragment;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     private LocationManager locationManager;
     private String provider;
-    private Location lastLocation,lastPoiLocation;
+    public static Location lastLocation,lastPoiLocation;
     private MyAdapter mAdapter;
     public static Fragment mainF,mapF,socialF,settingF;
     public static FragmentManager fragManager;
@@ -158,6 +159,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         provider = locationManager.getBestProvider(criteria, false);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             lastLocation = locationManager.getLastKnownLocation(provider);
+            Toast.makeText(getBaseContext(),"dfsg",Toast.LENGTH_SHORT).show();
         }
 
         // Initialize the location fields

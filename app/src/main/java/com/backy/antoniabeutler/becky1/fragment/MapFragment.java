@@ -12,19 +12,23 @@ import android.support.v7.content.res.AppCompatResources;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 
 import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.R;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.location.POI;
+import org.osmdroid.bonuspack.routing.MapQuestRoadManager;
 import org.osmdroid.bonuspack.routing.OSRMRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
+import org.osmdroid.tileprovider.cachemanager.CacheManager;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
+import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
@@ -47,6 +51,7 @@ import java.util.ArrayList;
 public class MapFragment extends Fragment implements MapEventsReceiver {
 
     private static MapView map = null;
+    CacheManager cachemanager = null;
     GeoPoint geoPoint /*=new GeoPoint(51.029585,13.7455735)*/;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -69,6 +74,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
     private static IMapController mapController;
 
     private OnFragmentInteractionListener mListener;
+    private ArrayList<GeoPoint> PoiGeoL = new ArrayList<>();
 
     public MapFragment() {
         // Required empty public constructor
@@ -97,6 +103,10 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
+
+
     }
 
     @Override
@@ -104,7 +114,17 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_map, container, false);
-
+        final Button button = view.findViewById(R.id.route);
+        button.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if(roadOverlay != null) map.getOverlays().remove(roadOverlay);
+                if(mRoadNodeMarkers != null){
+                    mRoadNodeMarkers.getItems().clear();
+                    map.getOverlays().remove(mRoadNodeMarkers);
+                }
+                map.invalidate();
+            }
+        });
         if (getArguments() != null) {
             mLatitude = getArguments().getDouble("latitude");
             mLongitude = getArguments().getDouble("longitude");
@@ -128,7 +148,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         map.setBuiltInZoomControls(true);
         map.setMultiTouchControls(true);
         mapController = map.getController();
-        mapController.setZoom(14);
+        mapController.setZoom(15.0);
 
         MapEventsOverlay overlay = new MapEventsOverlay(this);
         map.getOverlays().add(overlay);
@@ -145,10 +165,21 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
         map.invalidate();
 
+
+        ArrayList<GeoPoint> GPList = new ArrayList<>();
+        GPList.add(startPoint);
+
         if(poiType != null){
             poiList = MainActivity.mPois.get(poiType);
             POIMap();
+            GPList.addAll(PoiGeoL);
         }
+        /*if (cachemanager == null){
+            cachemanager = new CacheManager(map);
+            cachemanager.downloadAreaAsync(getContext(), GPList, 15, 15);
+        }*/
+
+
 
 
         return view;
@@ -171,7 +202,8 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         protected Road doInBackground(ArrayList<GeoPoint>... params) {
 
             ArrayList<GeoPoint> wayPoints = params[0];
-            RoadManager roadManager = new OSRMRoadManager(getContext());
+            RoadManager roadManager = new MapQuestRoadManager("8niVTA1aAVjZ1DLEiN9yAFa1UkVf3zSv");
+            roadManager.addRequestOption("routeType=pedestrian");
             return roadManager.getRoad(wayPoints);
         }
 
@@ -192,6 +224,8 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
         mRoadNodeMarkers.getItems().clear();
         map.getOverlays().remove(mRoadNodeMarkers);
+        double d = road.mDuration;
+        double s = road.mLength;
 
         if(roadOverlay != null) map.getOverlays().remove(roadOverlay);
         roadOverlay = RoadManager.buildRoadOverlay(road);
@@ -219,6 +253,10 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         map.invalidate();
     }
 
+    private void updateRoute(){
+
+    }
+
     public void POIMap(){
 
         FolderOverlay poiMarkers = new FolderOverlay(getContext());
@@ -241,6 +279,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
         if (poiList != null){
             for (POI poi:poiList){
+                PoiGeoL.add(poi.mLocation);
                 Marker poiMarker = new Marker(map);
                 poiMarker.setTitle(poi.mType);
                 poiMarker.setSnippet(poi.mDescription);
@@ -303,7 +342,10 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
     @Override
     public boolean longPressHelper(GeoPoint p) {
-        getRoadAsync(startPoint,p);
+        if(MainActivity.lastLocation != null)
+            getRoadAsync(new GeoPoint(MainActivity.lastLocation.getLatitude(),MainActivity.lastLocation.getLongitude()),p);
+        else
+            getRoadAsync(MainActivity.homepoint,p);
         return false;
     }
 
