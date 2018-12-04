@@ -21,6 +21,7 @@ import android.widget.TextView;
 
 import com.backy.antoniabeutler.becky1.fragment.MapFragment;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 import static com.backy.antoniabeutler.becky1.MainActivity.mPois;
@@ -165,9 +166,10 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         });
         String s;
         if(!MainActivity.shortestdistance.containsKey(mDataset.get(position).getTile_name())){
-            s = "nothing found";
+            s = "Nothing found!";
         }else{
-            s = Double.toString(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()));
+            DecimalFormat df = new DecimalFormat("###.##");
+            s  = df.format(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()))+ " m";
         }
         holder.distance.setText(s);
     }
