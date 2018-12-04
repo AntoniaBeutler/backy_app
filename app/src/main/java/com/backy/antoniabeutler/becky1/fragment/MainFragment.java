@@ -2,6 +2,7 @@ package com.backy.antoniabeutler.becky1.fragment;
 
 
 import android.content.Context;
+import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -76,10 +77,7 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mLatitude = getArguments().getDouble("latitude");
-            mLongitude = getArguments().getDouble("longitude");
-        }
+
     }
 
     @Override
@@ -87,6 +85,11 @@ public class MainFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_main, container, false);
+
+        if (getArguments() != null) {
+            mLatitude = getArguments().getDouble("latitude");
+            mLongitude = getArguments().getDouble("longitude");
+        }
 
         context = getContext();
 

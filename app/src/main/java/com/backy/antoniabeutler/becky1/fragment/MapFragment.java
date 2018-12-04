@@ -1,7 +1,9 @@
 package com.backy.antoniabeutler.becky1.fragment;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -10,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.R;
@@ -32,6 +35,8 @@ import org.osmdroid.views.overlay.Polyline;
 import org.osmdroid.views.overlay.mylocation.DirectedLocationOverlay;
 
 import java.util.ArrayList;
+
+import static android.support.v7.content.res.AppCompatResources.getDrawable;
 
 
 /**
@@ -196,7 +201,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         map.getOverlays().add(1,roadOverlay);
         map.invalidate();
 
-        ///Drawable nodeIcon = getResources().getDrawable(R.drawable.marker_node);
+        //Drawable nodeIcon = getDrawable(getContext(), poi_image);
         for (int i=0; i<road.mNodes.size(); i++){
             RoadNode node = road.mNodes.get(i);
             Marker nodeMarker = new Marker(map);
@@ -219,10 +224,17 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
     public void POIMap(){
 
+        int poi_image;
         FolderOverlay poiMarkers = new FolderOverlay(getContext());
         map.getOverlays().add(poiMarkers);
 
-        //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
+        Cursor cursor = MainActivity.sqLiteHelper.getImage(poiType);
+        cursor.moveToFirst();
+
+        poi_image = cursor.getInt(cursor.getColumnIndex("image_res_id"));
+        Toast.makeText(getContext(),poi_image, Toast.LENGTH_SHORT).show();
+
+        Drawable poiIcon = getDrawable(getContext(), poi_image);
         if (poiList != null){
             for (POI poi:poiList){
                 Marker poiMarker = new Marker(map);
@@ -230,7 +242,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
                 poiMarker.setSnippet(poi.mDescription);
                 poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(startPoint))+ " m");
                 poiMarker.setPosition(poi.mLocation);
-                //poiMarker.setIcon(poiIcon);
+                poiMarker.setIcon(poiIcon);
                 if (poi.mThumbnail != null){
                     poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
                 }
