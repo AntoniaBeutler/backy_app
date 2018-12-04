@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Criteria;
 import android.location.Location;
@@ -39,6 +40,8 @@ import java.util.HashMap;
 import static com.backy.antoniabeutler.becky1.fragment.MapFragment.updateLocation;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, MapFragment.OnFragmentInteractionListener, SocialFragment.OnFragmentInteractionListener, MainFragment.OnFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
+
+    public static SQLiteHelper sqLiteHelper;
 
     private LocationManager locationManager;
     private String provider;
@@ -139,6 +142,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
+
+        getApplicationContext().deleteDatabase("BackyDatabase");
+
+        sqLiteHelper = new SQLiteHelper(this);
+
+        sqLiteHelper.loadImages();
 
         fragManager = getSupportFragmentManager();
 
@@ -261,13 +270,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
             if(mapF != null) {
                 updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
-
                 //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
             }
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
-
-            //mAdapter.notifyItemRangeChanged(0,mAdapter.getItemCount(), true);
-
+            //getApplicationContext().deleteDatabase("BackyDatabase");
         }
     }
 
