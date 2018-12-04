@@ -2,11 +2,13 @@ package com.backy.antoniabeutler.becky1.fragment;
 
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.support.v7.content.res.AppCompatResources;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -222,7 +224,21 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         FolderOverlay poiMarkers = new FolderOverlay(getContext());
         map.getOverlays().add(poiMarkers);
 
-        //Drawable poiIcon = getResources().getDrawable(R.drawable.marker_poi_default);
+
+
+        int icon = 0;
+        switch (poiType){
+            case "Hotel": icon = R.drawable.hotel; break;
+            case "Hostel": icon = R.drawable.hostel; break;
+            case "Campingside": icon = R.drawable.tent; break;
+            case "Water": icon = R.drawable.water; break;
+            case "Supermarket": icon = R.drawable.cart; break;
+            case "Restaurant": icon = R.drawable.restaurant; break;
+            case "Train Station": icon = R.drawable.railway; break;
+            case "Bus Station": icon= R.drawable.bus; break;
+        }
+        Drawable poiIcon = AppCompatResources.getDrawable(getContext(),icon);
+
         if (poiList != null){
             for (POI poi:poiList){
                 Marker poiMarker = new Marker(map);
@@ -230,7 +246,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
                 poiMarker.setSnippet(poi.mDescription);
                 poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(startPoint))+ " m");
                 poiMarker.setPosition(poi.mLocation);
-                //poiMarker.setIcon(poiIcon);
+                poiMarker.setIcon(poiIcon);
                 if (poi.mThumbnail != null){
                     poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
                 }

@@ -23,7 +23,6 @@
                 <action android:name="android.intent.action.BATTERY_OKAY"/>
             </intent-filter>
         </activity>
-        <activity android:name=".MapActivity"></activity>
 
     </application>
 
