@@ -23,14 +23,14 @@ public class SQLiteHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String image_tab = "CREATE TABLE image(poi TEXT PRIMARY KEY, image_res_id INTEGER, loaded INTEGER)";
+        String image_tab = "CREATE TABLE tile(poi TEXT PRIMARY KEY, image_res_id INTEGER, loaded INTEGER)";
 
         db.execSQL(image_tab);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS image");
+        db.execSQL("DROP TABLE IF EXISTS tile");
         onCreate(db);
     }
 
@@ -63,14 +63,35 @@ public class SQLiteHelper extends SQLiteOpenHelper {
             } else {
                 cValues.put("loaded", 0);
             }
-            db.insert("image", null, cValues);
+            db.insert("tile", null, cValues);
             System.out.println("loaded " + s);
         }
     }
 
     public Cursor getImage(String poi){
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT image_res_id FROM image WHERE poi=?";
+        String query = "SELECT image_res_id FROM tile WHERE poi=?";
         return db.rawQuery(query, new String[] { poi });
+    }
+
+    public Cursor getLoadedTiles(int loaded){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT poi FROM tile WHERE loaded=?";
+        return db.rawQuery(query, new String[]{ Integer.toString(loaded) });
+    }
+
+    public boolean updateTileState(String poi, int loaded){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues cValues = new ContentValues();
+        cValues.put("loaded", loaded);
+
+        long result = db.update("tile", cValues, "poi=?", new String[] { poi });
+
+        if (result == -1) {
+            return false;
+        } else {
+            return true;
+        }
     }
 }

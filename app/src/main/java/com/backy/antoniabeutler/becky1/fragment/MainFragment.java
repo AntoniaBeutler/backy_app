@@ -77,7 +77,25 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        loadTiles();
 
+    }
+
+    private void loadTiles(){
+        String lTile;
+        Cursor cursor = MainActivity.sqLiteHelper.getLoadedTiles(1);
+
+        cursor.moveToFirst();
+        lTile = cursor.getString(cursor.getColumnIndex("poi"));
+        tile_List.add(new Tile(lTile));
+        while (cursor.moveToNext()){
+            lTile = cursor.getString(cursor.getColumnIndex("poi"));
+            if (lTile.equals("Add POI")){
+                tile_List.add(0, new Tile(cursor.getString(cursor.getColumnIndex("poi"))));
+            } else {
+                tile_List.add(new Tile(lTile));
+            }
+        }
     }
 
     @Override
@@ -93,13 +111,16 @@ public class MainFragment extends Fragment {
 
         context = getContext();
 
-        if(tile_List.isEmpty()) tile_List.add(new Tile("Add POI"));
+        //if(tile_List.isEmpty()) tile_List.add(new Tile("Add POI"));
 
         mRecyclerView = view.findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
 
         mLayoutManager = new GridLayoutManager(context,2);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+
+        //mAdapter.notifyDataSetChanged();
 
         mAdapter = new MyAdapter(context, tile_List, mLatitude, mLongitude , mRecyclerView, MainActivity.fragManager);
         try{

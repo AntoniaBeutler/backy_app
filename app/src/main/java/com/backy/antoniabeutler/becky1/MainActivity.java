@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Criteria;
@@ -143,26 +144,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
-        getApplicationContext().deleteDatabase("BackyDatabase");
+        //getApplicationContext().deleteDatabase("BackyDatabase");
 
         sqLiteHelper = new SQLiteHelper(this);
-
         sqLiteHelper.loadImages();
 
+
+
         fragManager = getSupportFragmentManager();
-
-
         navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(navItemSelectedListener);
 
-
-
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
-        }
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, false);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
@@ -195,6 +189,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
 
     }
+
     private void loadPois(){
         getPOIAsync("Campingside");
         getPOIAsync("Train Station");
