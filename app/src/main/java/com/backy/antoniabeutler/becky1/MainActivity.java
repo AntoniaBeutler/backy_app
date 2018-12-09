@@ -6,6 +6,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.BitmapDrawable;
 import android.location.Criteria;
 import android.location.Location;
@@ -40,6 +42,8 @@ import java.util.HashMap;
 import static com.backy.antoniabeutler.becky1.fragment.MapFragment.updateLocation;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, MapFragment.OnFragmentInteractionListener, SocialFragment.OnFragmentInteractionListener, MainFragment.OnFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
+
+    public static SQLiteHelper sqLiteHelper;
 
     private LocationManager locationManager;
     private String provider;
@@ -141,20 +145,19 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main_activity);
 
+        //getApplicationContext().deleteDatabase("BackyDatabase");
+
+        sqLiteHelper = new SQLiteHelper(this);
+        sqLiteHelper.loadImages();
+
+
+
         fragManager = getSupportFragmentManager();
-
-
         navigation = findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(navItemSelectedListener);
 
-
-
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
 
-        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
-        }
         Criteria criteria = new Criteria();
         provider = locationManager.getBestProvider(criteria, false);
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
@@ -172,15 +175,15 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         if(lastPoiLocation != null) useLoc =true;
 
-        Fragment frag = new MainFragment();
+        mainF = new MainFragment();
         Bundle args = new Bundle();
         if (lastLocation != null){
             args.putDouble("latitude", lastLocation.getLatitude());
             args.putDouble("longitude", lastLocation.getLongitude());
-            frag.setArguments(args);
+            mainF.setArguments(args);
         }
 
-        loadFragment(frag);
+        loadFragment(mainF);
 
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
@@ -188,6 +191,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
 
     }
+
     private void loadPois(){
         getPOIAsync("Campingside");
         getPOIAsync("Train Station");
@@ -263,13 +267,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
             if(mapF != null) {
                 updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
-
                 //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
             }
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
-
-            //mAdapter.notifyItemRangeChanged(0,mAdapter.getItemCount(), true);
-
+            //getApplicationContext().deleteDatabase("BackyDatabase");
         }
     }
 

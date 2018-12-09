@@ -69,6 +69,14 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                                 }
                                 mDataset.add(new Tile(item.getTitle().toString()));
 
+                                boolean b = MainActivity.sqLiteHelper.updateTileState(item.getTitle().toString(), 1);
+                                if (b){
+                                    System.out.println("Save was successful " + item.getTitle().toString());
+                                } else{
+                                    System.out.println("Save not successful"  + item.getTitle().toString());
+                                }
+
+
                                 MyAdapter mAdapter = new MyAdapter(context, mDataset, latitude, longitude, recView, fragManager);
                                 recView.setAdapter(mAdapter);
 
@@ -136,18 +144,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         return vh;
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull MyViewHolder holder,final int position) {
 
-    }
 
     // Replace the contents of a view (invoked by the layout manager)
     @Override
-    public void onBindViewHolder(MyViewHolder holder, final int position, List<Object> payload) {
-        if (payload.isEmpty()){
-            onBindViewHolder(holder, position);
-        }
-
+    public void onBindViewHolder(MyViewHolder holder, final int position) {
         holder.mImage.setImageResource(mDataset.get(position).getImg_src());
         holder.info_text.setText(mDataset.get(position).getTile_name());
         if (mDataset.get(position).getTile_name().equals("Add POI")){
@@ -159,6 +160,12 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         holder.delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                boolean b = MainActivity.sqLiteHelper.updateTileState(mDataset.get(position).getTile_name(), 0);
+                if (b){
+                    System.out.println("Remove was successful " + mDataset.get(position).getTile_name());
+                } else{
+                    System.out.println("Remove not successful"  + mDataset.get(position).getTile_name());
+                }
                 mDataset.remove(position);
                 notifyItemRemoved(position);
                 notifyItemRangeChanged(position, getItemCount());

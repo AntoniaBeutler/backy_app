@@ -2,6 +2,7 @@ package com.backy.antoniabeutler.becky1.fragment;
 
 
 import android.content.Context;
+import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -76,9 +77,24 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mLatitude = getArguments().getDouble("latitude");
-            mLongitude = getArguments().getDouble("longitude");
+        loadTiles();
+
+    }
+
+    private void loadTiles(){
+        String lTile;
+        Cursor cursor = MainActivity.sqLiteHelper.getLoadedTiles(1);
+
+        cursor.moveToFirst();
+        lTile = cursor.getString(cursor.getColumnIndex("poi"));
+        tile_List.add(new Tile(lTile));
+        while (cursor.moveToNext()){
+            lTile = cursor.getString(cursor.getColumnIndex("poi"));
+            if (lTile.equals("Add POI")){
+                tile_List.add(0, new Tile(cursor.getString(cursor.getColumnIndex("poi"))));
+            } else {
+                tile_List.add(new Tile(lTile));
+            }
         }
     }
 
@@ -88,15 +104,23 @@ public class MainFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
+        if (getArguments() != null) {
+            mLatitude = getArguments().getDouble("latitude");
+            mLongitude = getArguments().getDouble("longitude");
+        }
+
         context = getContext();
 
-        if(tile_List.isEmpty()) tile_List.add(new Tile("Add POI"));
+        //if(tile_List.isEmpty()) tile_List.add(new Tile("Add POI"));
 
         mRecyclerView = view.findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
 
         mLayoutManager = new GridLayoutManager(context,2);
         mRecyclerView.setLayoutManager(mLayoutManager);
+
+
+        //mAdapter.notifyDataSetChanged();
 
         mAdapter = new MyAdapter(context, tile_List, mLatitude, mLongitude , mRecyclerView, MainActivity.fragManager);
         try{
