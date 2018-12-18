@@ -148,6 +148,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         sqLiteHelper = new SQLiteHelper(this);
         sqLiteHelper.loadImages();
+        sqLiteHelper.loadSettings();
 
 
 
