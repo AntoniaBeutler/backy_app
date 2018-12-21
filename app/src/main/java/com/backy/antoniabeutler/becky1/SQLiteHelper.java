@@ -66,7 +66,7 @@ public class SQLiteHelper extends SQLiteOpenHelper {
             } else {
                 cValues.put("loaded", 0);
             }
-            db.insert("tile", null, cValues);
+            db.insertOrThrow("tile", null, cValues);
             System.out.println("loaded " + s);
         }
     }
@@ -81,11 +81,11 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         cValues.put("latitude", 0.0);
         cValues.put("longitude", 0.0);
         cValues.put("map_download", 0);
-        cValues.put("poi_radius", 0);
-        cValues.put("poi_amount", 0);
+        cValues.put("poi_radius", 10);
+        cValues.put("poi_amount", 10);
         cValues.put("power_saving", 0);
 
-        db.insert("setting", null, cValues);
+        db.insertOrThrow("setting", null, cValues);
     }
 
     public Cursor getImage(String poi){
