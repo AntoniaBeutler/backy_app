@@ -44,6 +44,14 @@
         android:layout_marginEnd="10dp"
         android:background="#787878" />
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="385dp"
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="#787878" />
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -65,7 +73,9 @@
             android:textColor="#000000"
             android:textSize="12sp" />
 
+
         <EditText
+            android:id="@+id/editLocation"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="50dp"
@@ -74,7 +84,7 @@
             android:inputType="text"/>
 
         <Button
-            android:id="@+id/button"
+            android:id="@+id/buttonLocation"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -98,7 +108,7 @@
             android:textSize="12sp" />
 
         <CheckBox
-            android:id="@+id/checkBox"
+            android:id="@+id/checkBoxMap"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="275dp"
@@ -120,7 +130,7 @@
             android:textSize="12sp" />
 
         <EditText
-            android:id="@+id/editText2"
+            android:id="@+id/editAmount"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="100dp"
@@ -129,7 +139,7 @@
             android:inputType="number" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/buttonAmount"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -138,15 +148,15 @@
             android:text="Submit" />
 
         <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="250dp"
-            android:text="Set maximum search distance for POI."
-            android:textColor="#000000"
-            android:textSize="12sp" />
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="250dp"
+        android:text="Set maximum search distance for POI."
+        android:textColor="#000000"
+        android:textSize="12sp" />
 
         <EditText
-            android:id="@+id/editText3"
+            android:id="@+id/editRadius"
             android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="100dp"
@@ -155,13 +165,36 @@
             android:inputType="number" />
 
         <Button
-            android:id="@+id/button3"
+            android:id="@+id/buttonRadius"
             style="@style/Widget.AppCompat.Button.Borderless"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="255dp"
             android:layout_marginTop="270dp"
             android:text="Submit" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="330dp"
+            android:text="Power Saving"
+            android:textColor="#580C6D" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="350dp"
+            android:text="Enable Power Saving Mode."
+            android:textColor="#000000"
+            android:textSize="12sp" />
+
+        <CheckBox
+            android:id="@+id/checkBoxPowerSave"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="275dp"
+            android:layout_marginTop="340dp" />
+
 
 
     </RelativeLayout>

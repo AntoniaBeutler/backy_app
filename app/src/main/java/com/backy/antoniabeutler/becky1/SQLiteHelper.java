@@ -24,13 +24,16 @@ public class SQLiteHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String image_tab = "CREATE TABLE tile(poi TEXT PRIMARY KEY, image_res_id INTEGER, loaded INTEGER)";
+        String setting_tab = "CREATE TABLE setting(user TEXT PRIMARY KEY, location TEXT, latitude REAL, longitude REAL, map_download INTEGER, poi_radius INTEGER, poi_amount INTEGER, power_saving INTEGER)";
 
         db.execSQL(image_tab);
+        db.execSQL(setting_tab);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS tile");
+        db.execSQL("DROP TABLE IF EXISTS setting");
         onCreate(db);
     }
 
@@ -63,9 +66,26 @@ public class SQLiteHelper extends SQLiteOpenHelper {
             } else {
                 cValues.put("loaded", 0);
             }
-            db.insert("tile", null, cValues);
+            db.insertOrThrow("tile", null, cValues);
             System.out.println("loaded " + s);
         }
+    }
+
+    public void loadSettings(){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues cValues = new ContentValues();
+        //"CREATE TABLE setting(user TEXT PRIMARY KEY, location TEXT, latitude REAL, longitude REAL, map_download INTEGER, poi_radius INTEGER, poi_amount INTEGER, power_saving INTEGER)";
+        cValues.put("user", "Android");
+        cValues.put("location", "");
+        cValues.put("latitude", 0.0);
+        cValues.put("longitude", 0.0);
+        cValues.put("map_download", 0);
+        cValues.put("poi_radius", 10);
+        cValues.put("poi_amount", 10);
+        cValues.put("power_saving", 0);
+
+        db.insertOrThrow("setting", null, cValues);
     }
 
     public Cursor getImage(String poi){
@@ -94,4 +114,52 @@ public class SQLiteHelper extends SQLiteOpenHelper {
             return true;
         }
     }
+
+    public Cursor getPOIRadius(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT poi_radius FROM setting WHERE user=?";
+        return db.rawQuery(query, new String[]{ "Android" });
+    }
+
+    public Cursor getPOIAmount(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT poi_amount FROM setting WHERE user=?";
+        return db.rawQuery(query, new String[]{ "Android" });
+    }
+
+    public Cursor getPowerSaving(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT power_saving FROM setting WHERE user=?";
+        return db.rawQuery(query, new String[]{ "Android" });
+    }
+
+
+    public Cursor getMapDownload(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT map_download FROM setting WHERE user=?";
+        return db.rawQuery(query, new String[]{ "Android" });
+    }
+
+    public boolean updateSettings(String location, double latitude, double longitude, int map_download, int poi_radius, int poi_amount, int power_saving, int type){
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues cValues = new ContentValues();
+
+        switch (type){
+            case 0: cValues.put("location", location); cValues.put("latitude", latitude); cValues.put("longitude", longitude); break;
+            case 1: cValues.put("map_download", map_download); break;
+            case 2: cValues.put("poi_radius", poi_radius); break;
+            case 3: cValues.put("poi_amount", poi_amount); break;
+            case 4: cValues.put("power_saving", power_saving); break;
+        }
+
+        long result = db.update("setting", cValues, "user=?", new String[] { "Android" });
+
+        if (result == -1) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
 }

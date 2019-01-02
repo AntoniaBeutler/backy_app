@@ -65,7 +65,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         @Override
         public void onReceive(Context context, Intent intent) {
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-            if(level < 30) {
+            Cursor cursor = sqLiteHelper.getPowerSaving();
+            cursor.moveToFirst();
+            int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("power_saving")));
+            if((level <= 5)&&(b == 1)) {
+                if (locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER)){
+                    startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
+                }
+            } else if (level < 30){
                 lowBattery();
             } else {
                 okayBattery();
@@ -80,14 +87,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
     };
 
-
-    private BottomNavigationView.OnNavigationItemReselectedListener navItemReselectedListener = new BottomNavigationView.OnNavigationItemReselectedListener() {
-
-        @Override
-        public void onNavigationItemReselected(@NonNull MenuItem menuItem) {
-
-        }
-    };
 
     private BottomNavigationView.OnNavigationItemSelectedListener navItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
         @Override
@@ -158,9 +157,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         //getApplicationContext().deleteDatabase("BackyDatabase");
 
         sqLiteHelper = new SQLiteHelper(this);
-        sqLiteHelper.loadImages();
 
-
+        try {
+            sqLiteHelper.loadImages();
+            sqLiteHelper.loadSettings();
+        } catch (android.database.sqlite.SQLiteConstraintException e){
+            System.out.println("Database already initialized!");
+        }
 
         fragManager = getSupportFragmentManager();
         navigation = findViewById(R.id.navigation);
@@ -195,8 +198,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         loadFragment(mainF);
 
-        //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_LOW));
-        //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 
         // Registers BroadcastReceiver to track network connection changes.
@@ -317,13 +318,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 case "Bus Station": osmTag = "bus_station"; break;
             }
 
-            double maxDistance = 0.1;
+            Cursor cursor = sqLiteHelper.getPOIAmount();
+            cursor.moveToFirst();
+            int amount = Integer.parseInt(cursor.getString(cursor.getColumnIndex("poi_amount")));
+            cursor.close();
+            cursor = sqLiteHelper.getPOIRadius();
+            cursor.moveToFirst();
+            double maxDistance = (Double.parseDouble(cursor.getString(cursor.getColumnIndex("poi_radius"))));
+            cursor.close();
+            maxDistance = maxDistance/100.0;
             //String osmTag = getOSMTag(mFeatureTag);
 
             GeoPoint gp = (useLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): homepoint;
 
+
+
             NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
-            ArrayList<POI> pois = poiProvider.getPOICloseTo(gp, osmTag, 10, maxDistance);
+            ArrayList<POI> pois = poiProvider.getPOICloseTo(gp, osmTag, amount, maxDistance);
             if(!pois.isEmpty()){
                 double dist = pois.get(0).mLocation.distanceToAsDouble(gp);
                 for(POI p : pois){
