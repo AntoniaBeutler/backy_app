@@ -13,6 +13,8 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.BatteryManager;
@@ -70,6 +72,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
         }
     };
+    private BroadcastReceiver networkReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            ConnectivityManager conn =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo networkInfo = conn.getActiveNetworkInfo();
+        }
+    };
+
 
     private BottomNavigationView.OnNavigationItemReselectedListener navItemReselectedListener = new BottomNavigationView.OnNavigationItemReselectedListener() {
 
@@ -189,6 +199,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         //this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_OKAY));
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 
+        // Registers BroadcastReceiver to track network connection changes.
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        this.registerReceiver(networkReceiver, filter);
+
 
     }
 
@@ -223,12 +237,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     public void okayBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 400, 1, this);
+            locationManager.requestLocationUpdates(provider, 5000, 1, this);
         }
     }
     public void lowBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 2000, 1, this);
+            locationManager.requestLocationUpdates(provider, 20000, 1, this);
         }
     }
 
