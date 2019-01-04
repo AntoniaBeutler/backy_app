@@ -6,6 +6,8 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import org.osmdroid.util.GeoPoint;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -160,6 +162,22 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         } else {
             return true;
         }
+    }
+
+    public GeoPoint getLocation(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query1 = "SELECT longitude FROM setting WHERE user=?";
+        Cursor c1 = db.rawQuery(query1, new String[]{ "Android" });
+        String query2 = "SELECT latitude FROM setting WHERE user=?";
+        Cursor c2 = db.rawQuery(query2, new String[]{ "Android" });
+        c1.moveToFirst();
+        double longitude = (Double.parseDouble(c1.getString(c1.getColumnIndex("longitude"))));
+        c1.close();
+        c2.moveToFirst();
+        double latitude = (Double.parseDouble(c2.getString(c2.getColumnIndex("latitude"))));
+        c2.close();
+        GeoPoint g = new GeoPoint(latitude,longitude);
+        return g;
     }
 
 }

@@ -4,6 +4,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 import com.backy.antoniabeutler.becky1.MainActivity;
 import com.backy.antoniabeutler.becky1.R;
@@ -53,7 +56,7 @@ import static android.support.v7.content.res.AppCompatResources.getDrawable;
 public class MapFragment extends Fragment implements MapEventsReceiver {
 
     private static MapView map = null;
-    CacheManager cachemanager = null;
+    static CacheManager cachemanager = null;
     GeoPoint geoPoint /*=new GeoPoint(51.029585,13.7455735)*/;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -176,15 +179,27 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
             POIMap();
             GPList.addAll(PoiGeoL);
         }
-        /*if (cachemanager == null){
-            cachemanager = new CacheManager(map);
-            cachemanager.downloadAreaAsync(getContext(), GPList, 15, 15);
-        }*/
+
+
 
 
 
 
         return view;
+    }
+    public static void mapDownLoad(Context ctx){
+        ArrayList<GeoPoint> gpList = new ArrayList<>();
+        GeoPoint g = MainActivity.sqLiteHelper.getLocation();
+        g = new GeoPoint(51.0,13.0);
+        gpList.add(g);
+        Toast.makeText(ctx,String.valueOf(g.getLatitude()),Toast.LENGTH_SHORT).show();
+        if (cachemanager == null){
+            cachemanager = new CacheManager(map);
+            cachemanager.downloadAreaAsync(ctx, gpList, 15, 15);
+        }else{
+            cachemanager.downloadAreaAsync(ctx, gpList, 15, 15);
+        }
+
     }
 
     public static void updateLocation(GeoPoint startPoint){
@@ -341,6 +356,11 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         else
             getRoadAsync(MainActivity.homepoint,p);
         return false;
+    }
+    public boolean isOnline() {
+        ConnectivityManager cm =(ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
     /**

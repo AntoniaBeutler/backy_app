@@ -61,6 +61,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public static boolean useLoc = false;
     public static HashMap<String, Double> shortestdistance = new HashMap<>();
 
+
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -82,8 +83,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private BroadcastReceiver networkReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            ConnectivityManager conn =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo networkInfo = conn.getActiveNetworkInfo();
+            onLocationChanged(lastLocation);
+            /*ConnectivityManager conn =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetwork = conn.getActiveNetworkInfo();
+            if (activeNetwork != null) {
+
+                Toast.makeText(getApplicationContext(),"ThereIsInternet",Toast.LENGTH_SHORT).show();
+                // connected to the internet
+                switch (activeNetwork.getType()) {
+                    case ConnectivityManager.TYPE_WIFI:
+                        // connected to wifi
+                        break;
+                    case ConnectivityManager.TYPE_MOBILE:
+                        // connected to mobile data
+                        break;
+                    default:
+                        break;
+                }
+            } else {
+                Toast.makeText(getApplicationContext(),"noInternet",Toast.LENGTH_SHORT).show();
+                // not connected to the internet
+            }*/
         }
     };
 
@@ -183,7 +203,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             useLoc = true;
             onLocationChanged(lastLocation);
         } else {
-            loadPois();
+            if(isOnline())loadPois();
         }
 
         if(lastPoiLocation != null) useLoc =true;
@@ -269,17 +289,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         if(mAdapter != null) {
             lastLocation = location;
-            if(lastPoiLocation != null){
-                if(lastLocation.distanceTo(lastPoiLocation) > 100 ){
+            if(isOnline()){
+                if(lastPoiLocation != null){
+                    if(lastLocation.distanceTo(lastPoiLocation) > 100 ){
+                        lastPoiLocation = lastLocation;
+                        loadPois();
+                    }
+                }else {
                     lastPoiLocation = lastLocation;
                     loadPois();
-
                 }
-            }else {
-                lastPoiLocation = lastLocation;
-                loadPois();
-
             }
+
             if(mapF != null) {
                 updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
                 //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
@@ -327,9 +348,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             double maxDistance = (Double.parseDouble(cursor.getString(cursor.getColumnIndex("poi_radius"))));
             cursor.close();
             maxDistance = maxDistance/100.0;
-            //String osmTag = getOSMTag(mFeatureTag);
 
-            GeoPoint gp = (useLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): homepoint;
+            GeoPoint gp = (useLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): sqLiteHelper.getLocation();
 
 
 
@@ -355,6 +375,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     void getPOIAsync(String tag){
         if(mPois.containsKey(tag)) mPois.remove(tag);
         new POILoadingTask().execute(tag);
+    }
+    public boolean isOnline() {
+        ConnectivityManager cm =(ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
 }
