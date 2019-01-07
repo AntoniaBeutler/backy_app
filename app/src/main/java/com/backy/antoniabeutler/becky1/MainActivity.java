@@ -61,6 +61,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public static boolean useLoc = false;
     public static HashMap<String, Double> shortestdistance = new HashMap<>();
 
+    private int updateTime = 300000;
+    private boolean mapState = false;
+
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
@@ -74,9 +77,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                 }
             } else if (level < 30){
-                lowBattery();
+                lowBattery(mapState);
             } else {
-                okayBattery();
+                okayBattery(mapState);
             }
         }
     };
@@ -116,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             switch (menuItem.getItemId()){
                 case R.id.main_side:
                     args = new Bundle();
+                    mapState = false;
                     if(mainF == null)
                         mainF = new MainFragment();
                     if(mainF.isAdded()){
@@ -148,8 +152,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     }
                     mapF.setArguments(args);
                     loadFragment(mapF);
+                    mapState = true;
                     return true;
                 case R.id.social_side:
+                    mapState = false;
                     if(socialF == null)
                         socialF = new SocialFragment();
                     if(socialF.isAdded())
@@ -157,6 +163,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     loadFragment(socialF);
                     return true;
                 case R.id.setting_side:
+                    mapState = false;
                     if(settingF == null)
                         settingF = new SettingFragment();
                     if(settingF.isAdded())
@@ -256,14 +263,18 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         this.mAdapter = adapter;
     }
 
-    public void okayBattery(){
+    public void okayBattery(boolean mapState){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 5000, 1, this);
+            if(mapState) updateTime = 10000;
+            else updateTime = 300000; // 300s = 5min
+            locationManager.requestLocationUpdates(provider, updateTime, 1, this);
         }
     }
-    public void lowBattery(){
+    public void lowBattery(boolean mapState){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 20000, 1, this);
+            if(mapState) updateTime = 20000;
+            else updateTime = 600000; // 600s = 10min
+            locationManager.requestLocationUpdates(provider, updateTime, 1, this);
         }
     }
 
@@ -272,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     protected void onResume() {
         super.onResume();
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, 400, 1, this);
+            locationManager.requestLocationUpdates(provider, updateTime, 1, this);
         }
 
     }
@@ -281,7 +292,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     protected void onPause() {
         super.onPause();
-        //locationManager.removeUpdates(this);
+        locationManager.removeUpdates(this);
     }
 
     @Override
@@ -380,6 +391,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         ConnectivityManager cm =(ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+
+    private void checkBattery(){
+
     }
 
 }
