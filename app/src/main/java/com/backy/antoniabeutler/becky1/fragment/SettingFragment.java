@@ -160,10 +160,11 @@ public class SettingFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 if (mapCheckBox.isChecked()) {
-                    MapFragment.mapDownLoad(getContext());
+                    //MapFragment.mapDownLoad(getContext());
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 1, 0, 0, 0, 1);
                     System.out.println("Checked");
                 } else {
+                    //MapFragment.deleteMap(getContext());
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 1);
                     System.out.println("Un-Checked");
                 }

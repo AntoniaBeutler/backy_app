@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     private int updateTime = 300000;
     private boolean mapState = false;
+    private boolean lowB = false;
 
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
@@ -77,9 +78,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                 }
             } else if (level < 30){
-                lowBattery(mapState);
+                lowB = true;
+                lowBattery();
             } else {
-                okayBattery(mapState);
+                lowB = false;
+                okayBattery();
             }
         }
     };
@@ -119,7 +122,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             switch (menuItem.getItemId()){
                 case R.id.main_side:
                     args = new Bundle();
-                    mapState = false;
+                    if(mapState){
+                        mapState = false;
+                        requestLocUpdate();
+                    }
+
                     if(mainF == null)
                         mainF = new MainFragment();
                     if(mainF.isAdded()){
@@ -153,9 +160,13 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     mapF.setArguments(args);
                     loadFragment(mapF);
                     mapState = true;
+                    requestLocUpdate();
                     return true;
                 case R.id.social_side:
-                    mapState = false;
+                    if(mapState){
+                        mapState = false;
+                        requestLocUpdate();
+                    }
                     if(socialF == null)
                         socialF = new SocialFragment();
                     if(socialF.isAdded())
@@ -163,7 +174,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     loadFragment(socialF);
                     return true;
                 case R.id.setting_side:
-                    mapState = false;
+                    if(mapState){
+                        mapState = false;
+                        requestLocUpdate();
+                    }
                     if(settingF == null)
                         settingF = new SettingFragment();
                     if(settingF.isAdded())
@@ -263,14 +277,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         this.mAdapter = adapter;
     }
 
-    public void okayBattery(boolean mapState){
+    public void okayBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             if(mapState) updateTime = 10000;
             else updateTime = 300000; // 300s = 5min
             locationManager.requestLocationUpdates(provider, updateTime, 1, this);
         }
     }
-    public void lowBattery(boolean mapState){
+    public void lowBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             if(mapState) updateTime = 20000;
             else updateTime = 600000; // 600s = 10min
@@ -393,7 +407,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
-    private void checkBattery(){
+    private void requestLocUpdate(){
+        if(lowB)
+            lowBattery();
+        else
+            okayBattery();
 
     }
 

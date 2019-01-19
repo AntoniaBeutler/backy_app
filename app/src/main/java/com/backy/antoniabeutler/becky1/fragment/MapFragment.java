@@ -56,7 +56,7 @@ import static android.support.v7.content.res.AppCompatResources.getDrawable;
 public class MapFragment extends Fragment implements MapEventsReceiver {
 
     private static MapView map = null;
-    static CacheManager cachemanager = null;
+    CacheManager cachemanager = null;
     GeoPoint geoPoint /*=new GeoPoint(51.029585,13.7455735)*/;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -122,6 +122,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         final Button button = view.findViewById(R.id.route);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                //mapDownLoad(getContext());
                 if(roadOverlay != null) map.getOverlays().remove(roadOverlay);
                 if(mRoadNodeMarkers != null){
                     mRoadNodeMarkers.getItems().clear();
@@ -187,7 +188,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
         return view;
     }
-    public static void mapDownLoad(Context ctx){
+    public void mapDownLoad(Context ctx){
         ArrayList<GeoPoint> gpList = new ArrayList<>();
         GeoPoint g = MainActivity.sqLiteHelper.getLocation();
         g = new GeoPoint(51.0,13.0);
@@ -201,6 +202,21 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         }
 
     }
+
+    public void deleteMap(Context ctx){
+        ArrayList<GeoPoint> gpList = new ArrayList<>();
+        GeoPoint g = MainActivity.sqLiteHelper.getLocation();
+        g = new GeoPoint(51.0,13.0);
+        gpList.add(g);
+
+        if (cachemanager == null)
+            cachemanager = new CacheManager(map);
+        cachemanager.cleanAreaAsync(ctx,gpList,15,15);
+
+    }
+
+
+
 
     public static void updateLocation(GeoPoint startPoint){
         myLocationOverlay.setLocation(startPoint);
