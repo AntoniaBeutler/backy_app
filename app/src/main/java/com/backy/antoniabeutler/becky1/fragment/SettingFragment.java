@@ -2,7 +2,9 @@ package com.backy.antoniabeutler.becky1.fragment;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.location.Address;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -24,6 +26,7 @@ import com.backy.antoniabeutler.becky1.R;
 import org.osmdroid.bonuspack.location.GeocoderNominatim;
 
 import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -46,9 +49,11 @@ public class SettingFragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
+    private GeocoderNominatim geoNom;
+    private List<Address> addressList;
+    private String location;
 
-    private GeocoderNominatim geocoder = new GeocoderNominatim("mobile");
-    private CheckBox powerSaveCheckBox, mapCheckBox;
+    private CheckBox powerSaveCheckBox, useLocationCheckBox;
     private Button radiusButton, amountButton, locationButton;
     private EditText radiusEdit, amountEdit, locationEdit;
 
@@ -83,19 +88,86 @@ public class SettingFragment extends Fragment {
         }
     }
 
+    class GeocodingTask extends AsyncTask<String, Void, List<Address>>{
+
+        @Override
+        protected List<Address> doInBackground(String... strings) {
+
+            try{
+                addressList = geoNom.getFromLocationName(strings[0],1);
+            } catch (IOException e){ }
+
+            return addressList;
+        }
+
+        @Override
+        protected void onPostExecute(List<Address> addresses) {
+            super.onPostExecute(addresses);
+            if (addressList.size() != 0){
+                Address a = addressList.get(0);
+                String name;
+                if ((a.getLocality() == null)||(a.getLocality().equals(""))){
+                    name = location;
+                } else {
+                    name = a.getLocality();
+                }
+                MainActivity.sqLiteHelper.updateSettings(name, a.getLatitude(), a.getLongitude(), 0, 0, 0, 0, 0);
+
+                locationEdit.setHint(name);
+                locationEdit.setText("");
+                locationEdit.onEditorAction(EditorInfo.IME_ACTION_DONE);
+
+            } else {
+                Toast.makeText(getContext(), "No location with stated name found!", Toast.LENGTH_SHORT).show();
+            }
+
+        }
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_setting, container, false);
         Cursor cursor;
 
-        // TODO: Implement the setOnClickListener for the Location with request for longitude and latitude of desired destination
         locationEdit = view.findViewById(R.id.editLocation);
+        cursor = MainActivity.sqLiteHelper.getLocationName();
+        cursor.moveToFirst();
+        String loc = cursor.getString(cursor.getColumnIndex("location"));
+        locationEdit.setHint(loc);
 
+
+        geoNom = new GeocoderNominatim("Backy-App_for_backpacker_and_travelers_university_project");
+        geoNom.setService(GeocoderNominatim.NOMINATIM_SERVICE_URL);
         locationButton = view.findViewById(R.id.buttonLocation);
         locationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                System.out.println("Location changed");
+                location = locationEdit.getText().toString();
+                new GeocodingTask().execute(location);
+            }
+        });
+
+        useLocationCheckBox = view.findViewById(R.id.checkBoxUseLoc);
+        cursor = MainActivity.sqLiteHelper.getUseLocation();
+        cursor.moveToFirst();
+        int use_location = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
+        if (use_location == 1){
+            useLocationCheckBox.setChecked(true);
+        } else if (use_location == 0){
+            useLocationCheckBox.setChecked(false);
+        }
+        cursor.close();
+
+        useLocationCheckBox.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if (useLocationCheckBox.isChecked()) {
+                    MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 1, 0, 0, 0, 1);
+                    System.out.println("Checked");
+                } else {
+                    MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 1);
+                    System.out.println("Un-Checked");
+                }
             }
         });
 
@@ -145,32 +217,6 @@ public class SettingFragment extends Fragment {
             }
         });
 
-        mapCheckBox = view.findViewById(R.id.checkBoxMap);
-        cursor = MainActivity.sqLiteHelper.getMapDownload();
-        cursor.moveToFirst();
-        int map = Integer.parseInt(cursor.getString(cursor.getColumnIndex("map_download")));
-        if (map == 1){
-            mapCheckBox.setChecked(true);
-        } else if (map == 0){
-            mapCheckBox.setChecked(false);
-        }
-        cursor.close();
-
-        mapCheckBox.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                if (mapCheckBox.isChecked()) {
-                    //MapFragment.mapDownLoad(getContext());
-                    MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 1, 0, 0, 0, 1);
-                    System.out.println("Checked");
-                } else {
-                    //MapFragment.deleteMap(getContext());
-                    MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 1);
-                    System.out.println("Un-Checked");
-                }
-            }
-        });
-
         powerSaveCheckBox = view.findViewById(R.id.checkBoxPowerSave);
         cursor = MainActivity.sqLiteHelper.getPowerSaving();
         cursor.moveToFirst();
@@ -189,7 +235,7 @@ public class SettingFragment extends Fragment {
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 1, 4);
                     System.out.println("Checked");
                 } else {
-                    MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 1, 0, 0, 0, 4);
+                    MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 4);
                     System.out.println("Un-Checked");
                 }
             }

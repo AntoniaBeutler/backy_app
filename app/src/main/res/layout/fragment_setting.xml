@@ -31,7 +31,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="160dp"
+        android:layout_marginTop="200dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:background="#787878" />
@@ -39,15 +39,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="220dp"
-        android:layout_marginStart="10dp"
-        android:layout_marginEnd="10dp"
-        android:background="#787878" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="385dp"
+        android:layout_marginTop="370dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:background="#787878" />
@@ -96,35 +88,28 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginTop="105dp"
-            android:text="Map Download"
-            android:textColor="#580C6D" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="125dp"
-            android:text="Download map for given Default Location."
+            android:text="Use the location indicated above."
             android:textColor="#000000"
             android:textSize="12sp" />
 
         <CheckBox
-            android:id="@+id/checkBoxMap"
+            android:id="@+id/checkBoxUseLoc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="275dp"
-            android:layout_marginTop="110dp" />
+            android:layout_marginTop="100dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="165dp"
+            android:layout_marginTop="145dp"
             android:text="Points of Interest"
             android:textColor="#580C6D" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="185dp"
+            android:layout_marginTop="165dp"
             android:text="Set maximum amount of displayed POI results."
             android:textColor="#000000"
             android:textSize="12sp" />
@@ -134,7 +119,7 @@
             android:layout_width="250dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="100dp"
-            android:layout_marginTop="200dp"
+            android:layout_marginTop="180dp"
             android:hint="10"
             android:inputType="number" />
 
@@ -144,23 +129,23 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="255dp"
-            android:layout_marginTop="200dp"
+            android:layout_marginTop="180dp"
             android:text="Submit" />
 
         <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="250dp"
+        android:layout_marginTop="230dp"
         android:text="Set maximum search distance for POI."
         android:textColor="#000000"
         android:textSize="12sp" />
 
         <EditText
             android:id="@+id/editRadius"
-            android:layout_width="250dp"
+            android:layout_width="230dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="100dp"
-            android:layout_marginTop="270dp"
+            android:layout_marginTop="250dp"
             android:hint="10 km"
             android:inputType="number" />
 
@@ -170,20 +155,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="255dp"
-            android:layout_marginTop="270dp"
+            android:layout_marginTop="250dp"
             android:text="Submit" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="330dp"
+            android:layout_marginTop="315dp"
             android:text="Power Saving"
             android:textColor="#580C6D" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="350dp"
+            android:layout_marginTop="335dp"
             android:text="Enable Power Saving Mode."
             android:textColor="#000000"
             android:textSize="12sp" />
@@ -193,9 +178,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="275dp"
-            android:layout_marginTop="340dp" />
-
-
+            android:layout_marginTop="320dp" />
 
     </RelativeLayout>
 

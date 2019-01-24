@@ -140,9 +140,14 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
             }
 
             locationAvailable = getArguments().getBoolean("locationAvailable");
-            if(locationAvailable){
-                startPoint = MainActivity.homepoint;
-            }else{
+
+            Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
+            cursor.moveToFirst();
+            int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
+
+            if((locationAvailable) && (b == 1)){
+                startPoint = MainActivity.sqLiteHelper.getLocation();
+            }else if (!locationAvailable){
                 startPoint = new GeoPoint(mLatitude, mLongitude);
             }
         }
@@ -370,7 +375,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         if(MainActivity.lastLocation != null)
             getRoadAsync(new GeoPoint(MainActivity.lastLocation.getLatitude(),MainActivity.lastLocation.getLongitude()),p);
         else
-            getRoadAsync(MainActivity.homepoint,p);
+            getRoadAsync(MainActivity.sqLiteHelper.getLocation(),p);
         return false;
     }
     public boolean isOnline() {

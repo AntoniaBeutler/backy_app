@@ -8,10 +8,10 @@
         android:id="@+id/map_side"
         android:title="Map"
         android:icon="@drawable/map"/>
-    <item
+    <!--<item
         android:id="@+id/social_side"
         android:title="Share"
-        android:icon="@drawable/social"/>
+        android:icon="@drawable/social"/> -->
     <item
         android:id="@+id/setting_side"
         android:title="Settings"

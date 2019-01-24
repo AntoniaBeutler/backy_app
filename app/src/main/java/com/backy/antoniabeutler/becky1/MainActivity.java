@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private BroadcastReceiver networkReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            onLocationChanged(lastLocation);
+            //onLocationChanged(lastLocation);
             /*ConnectivityManager conn =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo activeNetwork = conn.getActiveNetworkInfo();
             if (activeNetwork != null) {
@@ -162,7 +162,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     mapState = true;
                     requestLocUpdate();
                     return true;
-                case R.id.social_side:
+                /*case R.id.social_side:
                     if(mapState){
                         mapState = false;
                         requestLocUpdate();
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     if(socialF.isAdded())
                         return true;
                     loadFragment(socialF);
-                    return true;
+                    return true;*/
                 case R.id.setting_side:
                     if(mapState){
                         mapState = false;
@@ -378,7 +378,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
 
 
-            NominatimPOIProvider poiProvider = new NominatimPOIProvider("OSMBonusPackTutoUserAgent");
+            NominatimPOIProvider poiProvider = new NominatimPOIProvider("Backy-App_for_backpacker_and_travelers_university_project");
             ArrayList<POI> pois = poiProvider.getPOICloseTo(gp, osmTag, amount, maxDistance);
             if(!pois.isEmpty()){
                 double dist = pois.get(0).mLocation.distanceToAsDouble(gp);

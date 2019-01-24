@@ -26,7 +26,7 @@ public class SQLiteHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String image_tab = "CREATE TABLE tile(poi TEXT PRIMARY KEY, image_res_id INTEGER, loaded INTEGER)";
-        String setting_tab = "CREATE TABLE setting(user TEXT PRIMARY KEY, location TEXT, latitude REAL, longitude REAL, map_download INTEGER, poi_radius INTEGER, poi_amount INTEGER, power_saving INTEGER)";
+        String setting_tab = "CREATE TABLE setting(user TEXT PRIMARY KEY, location TEXT, latitude REAL, longitude REAL, use_location INTEGER, poi_radius INTEGER, poi_amount INTEGER, power_saving INTEGER)";
 
         db.execSQL(image_tab);
         db.execSQL(setting_tab);
@@ -77,12 +77,11 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cValues = new ContentValues();
-        //"CREATE TABLE setting(user TEXT PRIMARY KEY, location TEXT, latitude REAL, longitude REAL, map_download INTEGER, poi_radius INTEGER, poi_amount INTEGER, power_saving INTEGER)";
         cValues.put("user", "Android");
         cValues.put("location", "");
         cValues.put("latitude", 0.0);
         cValues.put("longitude", 0.0);
-        cValues.put("map_download", 0);
+        cValues.put("use_location", 0);
         cValues.put("poi_radius", 10);
         cValues.put("poi_amount", 10);
         cValues.put("power_saving", 0);
@@ -136,20 +135,20 @@ public class SQLiteHelper extends SQLiteOpenHelper {
     }
 
 
-    public Cursor getMapDownload(){
+    public Cursor getUseLocation(){
         SQLiteDatabase db = this.getReadableDatabase();
-        String query = "SELECT map_download FROM setting WHERE user=?";
+        String query = "SELECT use_location FROM setting WHERE user=?";
         return db.rawQuery(query, new String[]{ "Android" });
     }
 
-    public boolean updateSettings(String location, double latitude, double longitude, int map_download, int poi_radius, int poi_amount, int power_saving, int type){
+    public boolean updateSettings(String location, double latitude, double longitude, int use_location, int poi_radius, int poi_amount, int power_saving, int type){
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cValues = new ContentValues();
 
         switch (type){
             case 0: cValues.put("location", location); cValues.put("latitude", latitude); cValues.put("longitude", longitude); break;
-            case 1: cValues.put("map_download", map_download); break;
+            case 1: cValues.put("use_location", use_location); break;
             case 2: cValues.put("poi_radius", poi_radius); break;
             case 3: cValues.put("poi_amount", poi_amount); break;
             case 4: cValues.put("power_saving", power_saving); break;
@@ -162,6 +161,12 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         } else {
             return true;
         }
+    }
+
+    public Cursor getLocationName(){
+        SQLiteDatabase db = this.getReadableDatabase();
+        String query = "SELECT location FROM setting WHERE user=?";
+        return db.rawQuery(query, new String[]{ "Android" });
     }
 
     public GeoPoint getLocation(){
