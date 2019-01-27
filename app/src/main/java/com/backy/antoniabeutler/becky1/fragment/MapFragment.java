@@ -57,7 +57,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
     private static MapView map = null;
     CacheManager cachemanager = null;
-    GeoPoint geoPoint /*=new GeoPoint(51.029585,13.7455735)*/;
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -108,10 +107,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
-
-
     }
 
     @Override
@@ -145,8 +140,11 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
             cursor.moveToFirst();
             int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
 
-            if((locationAvailable) && (b == 1)){
+            if ((b == 1)){
                 startPoint = MainActivity.sqLiteHelper.getLocation();
+            } else if(locationAvailable){
+                startPoint = new GeoPoint(0.0, 0.0);
+                Toast.makeText(getContext(),"Location not available!",Toast.LENGTH_SHORT).show();
             }else if (!locationAvailable){
                 startPoint = new GeoPoint(mLatitude, mLongitude);
             }
@@ -187,10 +185,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         }
 
 
-
-
-
-
         return view;
     }
     public void mapDownLoad(Context ctx){
@@ -229,8 +223,8 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         mapController.setCenter(startPoint);
 
         map.invalidate();
-
     }
+    public void doThis(){}
 
 
     private class roadTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road> {
@@ -291,10 +285,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         map.invalidate();
     }
 
-    private void updateRoute(){
-
-    }
-
     public void POIMap(){
 
         int poi_image;
@@ -352,8 +342,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         }
     }
 
-    public void doThis(){}
-
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -372,17 +360,10 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
     @Override
     public boolean longPressHelper(GeoPoint p) {
-        if(MainActivity.lastLocation != null)
-            getRoadAsync(new GeoPoint(MainActivity.lastLocation.getLatitude(),MainActivity.lastLocation.getLongitude()),p);
-        else
-            getRoadAsync(MainActivity.sqLiteHelper.getLocation(),p);
+        getRoadAsync(startPoint,p);
         return false;
     }
-    public boolean isOnline() {
-        ConnectivityManager cm =(ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
-    }
+
 
     /**
      * This interface must be implemented by activities that contain this

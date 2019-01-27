@@ -86,32 +86,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
         }
     };
-    private BroadcastReceiver networkReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            //onLocationChanged(lastLocation);
-            /*ConnectivityManager conn =  (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
-            NetworkInfo activeNetwork = conn.getActiveNetworkInfo();
-            if (activeNetwork != null) {
 
-                Toast.makeText(getApplicationContext(),"ThereIsInternet",Toast.LENGTH_SHORT).show();
-                // connected to the internet
-                switch (activeNetwork.getType()) {
-                    case ConnectivityManager.TYPE_WIFI:
-                        // connected to wifi
-                        break;
-                    case ConnectivityManager.TYPE_MOBILE:
-                        // connected to mobile data
-                        break;
-                    default:
-                        break;
-                }
-            } else {
-                Toast.makeText(getApplicationContext(),"noInternet",Toast.LENGTH_SHORT).show();
-                // not connected to the internet
-            }*/
-        }
-    };
 
 
     private BottomNavigationView.OnNavigationItemSelectedListener navItemSelectedListener = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -241,9 +216,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
 
-        // Registers BroadcastReceiver to track network connection changes.
-        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
-        this.registerReceiver(networkReceiver, filter);
 
 
     }
@@ -270,6 +242,22 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     public void onFragmentInteraction(Uri uri) {
 
+    }
+
+    @Override
+    public void useDefaultLocation(boolean value) {
+        if(value){
+            this.unregisterReceiver(this.mBatteryReceiver);
+            locationManager.removeUpdates(this);
+            System.out.println("use DefaultLocation");
+            if(isOnline()){
+                loadPois();
+            }
+        }else{
+            this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            requestLocUpdate();
+            System.out.println("Dont use DefaultLocation");
+        }
     }
 
     @Override
@@ -316,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             lastLocation = location;
             if(isOnline()){
                 if(lastPoiLocation != null){
-                    if(lastLocation.distanceTo(lastPoiLocation) > 100 ){
+                    if(lastLocation.distanceTo(lastPoiLocation) > 5000 ){
                         lastPoiLocation = lastLocation;
                         loadPois();
                     }
@@ -327,7 +315,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             }
 
             if(mapF != null) {
-                updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
+                //updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
                 //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
             }
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
@@ -401,6 +389,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         if(mPois.containsKey(tag)) mPois.remove(tag);
         new POILoadingTask().execute(tag);
     }
+
+    //check if network connection is available
     public boolean isOnline() {
         ConnectivityManager cm =(ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();

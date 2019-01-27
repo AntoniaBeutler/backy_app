@@ -120,6 +120,14 @@ public class SettingFragment extends Fragment {
             } else {
                 Toast.makeText(getContext(), "No location with stated name found!", Toast.LENGTH_SHORT).show();
             }
+            Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
+            cursor.moveToFirst();
+            if(Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")))==1){
+                try{
+                    ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation(true);
+                } catch (ClassCastException e){ }
+            }
+            cursor.close();
 
         }
     }
@@ -144,6 +152,7 @@ public class SettingFragment extends Fragment {
             public void onClick(View v) {
                 location = locationEdit.getText().toString();
                 new GeocodingTask().execute(location);
+
             }
         });
 
@@ -168,6 +177,7 @@ public class SettingFragment extends Fragment {
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 1);
                     System.out.println("Un-Checked");
                 }
+                updatePois();
             }
         });
 
@@ -190,6 +200,7 @@ public class SettingFragment extends Fragment {
                 }
                 radiusEdit.setText("");
                 radiusEdit.onEditorAction(EditorInfo.IME_ACTION_DONE);
+                updatePois();
                 System.out.println("Radius changed");
             }
         });
@@ -213,6 +224,7 @@ public class SettingFragment extends Fragment {
                 }
                 amountEdit.setText("");
                 amountEdit.onEditorAction(EditorInfo.IME_ACTION_DONE);
+                updatePois();
                 System.out.println("Amount changed");
             }
         });
@@ -283,5 +295,16 @@ public class SettingFragment extends Fragment {
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
+        void useDefaultLocation(boolean value);
+    }
+
+    private void updatePois(){
+        Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
+        cursor.moveToFirst();
+        int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
+        try{
+            ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation((b==1)?true:false);
+        } catch (ClassCastException e){ }
+        cursor.close();
     }
 }
