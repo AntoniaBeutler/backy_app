@@ -185,4 +185,13 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         return g;
     }
 
+    public boolean useDefaultLocation(){
+
+        Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
+        cursor.moveToFirst();
+        int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
+        cursor.close();
+        return b ==1 ? true : false;
+    }
+
 }

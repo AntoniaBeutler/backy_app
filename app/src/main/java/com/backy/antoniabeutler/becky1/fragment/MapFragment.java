@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -23,7 +21,6 @@ import com.backy.antoniabeutler.becky1.R;
 import org.osmdroid.api.IMapController;
 import org.osmdroid.bonuspack.location.POI;
 import org.osmdroid.bonuspack.routing.MapQuestRoadManager;
-import org.osmdroid.bonuspack.routing.OSRMRoadManager;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.bonuspack.routing.RoadNode;
@@ -31,7 +28,6 @@ import org.osmdroid.config.Configuration;
 import org.osmdroid.events.MapEventsReceiver;
 import org.osmdroid.tileprovider.cachemanager.CacheManager;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.BoundingBox;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.FolderOverlay;
@@ -53,9 +49,11 @@ import static android.support.v7.content.res.AppCompatResources.getDrawable;
  * Use the {@link MapFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class MapFragment extends Fragment implements MapEventsReceiver {
 
-    private static MapView map = null;
+
+public class MapFragment extends Fragment implements MapEventsReceiver{
+
+    private MapView map = null;
     CacheManager cachemanager = null;
 
     // TODO: Rename parameter arguments, choose names that match
@@ -71,11 +69,11 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
     private Boolean locationAvailable;
 
     public ArrayList<POI> poiList;
-    private static DirectedLocationOverlay myLocationOverlay;
+    private  DirectedLocationOverlay myLocationOverlay;
     protected FolderOverlay mRoadNodeMarkers;
     protected Polyline roadOverlay;
     protected GeoPoint startPoint;
-    private static IMapController mapController;
+    private  IMapController mapController;
 
     private OnFragmentInteractionListener mListener;
     private ArrayList<GeoPoint> PoiGeoL = new ArrayList<>();
@@ -136,11 +134,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
             locationAvailable = getArguments().getBoolean("locationAvailable");
 
-            Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
-            cursor.moveToFirst();
-            int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
-
-            if ((b == 1)){
+            if (MainActivity.sqLiteHelper.useDefaultLocation()){
                 startPoint = MainActivity.sqLiteHelper.getLocation();
             } else if(locationAvailable){
                 startPoint = new GeoPoint(0.0, 0.0);
@@ -173,18 +167,12 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         mapController.setCenter(startPoint);
 
         map.invalidate();
-
-
-        ArrayList<GeoPoint> GPList = new ArrayList<>();
-        GPList.add(startPoint);
+        //ArrayList<GeoPoint> GPList = new ArrayList<>();
+        //GPList.add(startPoint);
 
         if(poiType != null){
-            poiList = MainActivity.mPois.get(poiType);
             POIMap();
-            GPList.addAll(PoiGeoL);
         }
-
-
         return view;
     }
     public void mapDownLoad(Context ctx){
@@ -214,19 +202,15 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
 
     }
 
-
-
-
-    public static void updateLocation(GeoPoint startPoint){
+    //update the locationoverlay -> is called by main activity when location changed
+    public void updateLocation(GeoPoint startPoint){
+        this.startPoint = startPoint;
         myLocationOverlay.setLocation(startPoint);
-
         mapController.setCenter(startPoint);
-
         map.invalidate();
     }
-    public void doThis(){}
 
-
+    ////Async Task for Route calculation
     private class roadTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road> {
 
 
@@ -244,6 +228,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         }
     }
 
+    //call for Async Task for Route calculation between start and end point
     public void getRoadAsync(GeoPoint start, GeoPoint dest){
         ArrayList<GeoPoint> wayPoints = new ArrayList<>();
         wayPoints.add(start);
@@ -252,6 +237,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         new roadTask().execute(wayPoints);
     }
 
+    //draw route on Map
     private void route(Road road){
 
         mRoadNodeMarkers.getItems().clear();
@@ -285,8 +271,9 @@ public class MapFragment extends Fragment implements MapEventsReceiver {
         map.invalidate();
     }
 
+    //draw Poi Marker on Map
     public void POIMap(){
-
+        poiList = MainActivity.mPois.get(poiType);
         int poi_image;
         FolderOverlay poiMarkers = new FolderOverlay(getContext());
         map.getOverlays().add(poiMarkers);

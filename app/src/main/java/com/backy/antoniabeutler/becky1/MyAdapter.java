@@ -90,6 +90,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                             mapF = new MapFragment();
                         }
                         Bundle args = new Bundle();
+                        boolean d = MainActivity.sqLiteHelper.useDefaultLocation();
                         if (latitude != null || longitude != null){
                             args.putDouble("latitude", latitude);
                             args.putDouble("longitude", longitude);

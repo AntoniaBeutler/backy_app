@@ -120,15 +120,12 @@ public class SettingFragment extends Fragment {
             } else {
                 Toast.makeText(getContext(), "No location with stated name found!", Toast.LENGTH_SHORT).show();
             }
-            Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
-            cursor.moveToFirst();
-            if(Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")))==1){
+
+            if(MainActivity.sqLiteHelper.useDefaultLocation()){
                 try{
                     ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation(true);
                 } catch (ClassCastException e){ }
             }
-            cursor.close();
-
         }
     }
 
@@ -299,12 +296,10 @@ public class SettingFragment extends Fragment {
     }
 
     private void updatePois(){
-        Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
-        cursor.moveToFirst();
-        int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
+        boolean b =  MainActivity.sqLiteHelper.useDefaultLocation();
         try{
-            ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation((b==1)?true:false);
+            ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation(b);
         } catch (ClassCastException e){ }
-        cursor.close();
+
     }
 }

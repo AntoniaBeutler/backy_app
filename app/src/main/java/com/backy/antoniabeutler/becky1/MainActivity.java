@@ -41,7 +41,6 @@ import org.osmdroid.util.GeoPoint;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import static com.backy.antoniabeutler.becky1.fragment.MapFragment.updateLocation;
 
 public class MainActivity extends AppCompatActivity implements LocationListener, MapFragment.OnFragmentInteractionListener, SocialFragment.OnFragmentInteractionListener, MainFragment.OnFragmentInteractionListener, SettingFragment.OnFragmentInteractionListener{
 
@@ -51,19 +50,21 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private String provider;
     public static Location lastLocation,lastPoiLocation;
     private MyAdapter mAdapter;
-    public static Fragment mainF,mapF,socialF,settingF;
+    public static Fragment mainF,socialF,settingF;
+    public static MapFragment mapF;
     public static FragmentManager fragManager;
     public static BottomNavigationView navigation;
 
 
     public static HashMap<String,ArrayList<POI>> mPois = new HashMap<String,ArrayList<POI>>();
     public static GeoPoint homepoint = new GeoPoint(51.029585,13.7455735);
-    public static boolean useLoc = false;
     public static HashMap<String, Double> shortestdistance = new HashMap<>();
 
     private int updateTime = 300000;
     private boolean mapState = false;
     private boolean lowB = false;
+    private boolean defaultLoc;
+    private boolean BatteryReceiverRegistered = false;
 
 
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
@@ -99,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     args = new Bundle();
                     if(mapState){
                         mapState = false;
-                        requestLocUpdate();
+                        if(!defaultLoc) requestLocUpdate();
                     }
 
                     if(mainF == null)
@@ -108,10 +109,16 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                         return true;
                     } else {
 
-                        if (lastLocation != null){
+                        if (lastLocation != null && !defaultLoc){
                             args.putDouble("latitude", lastLocation.getLatitude());
                             args.putDouble("longitude", lastLocation.getLongitude());
                             mainF.setArguments(args);
+                        }else if(defaultLoc){
+
+                            args.putDouble("latitude", sqLiteHelper.getLocation().getLatitude());
+                            args.putDouble("longitude", sqLiteHelper.getLocation().getLongitude());
+                            mainF.setArguments(args);
+
                         }
                         loadFragment(mainF);
                         return true;
@@ -135,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     mapF.setArguments(args);
                     loadFragment(mapF);
                     mapState = true;
-                    requestLocUpdate();
+                    if(!defaultLoc) requestLocUpdate();
                     return true;
                 /*case R.id.social_side:
                     if(mapState){
@@ -151,7 +158,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 case R.id.setting_side:
                     if(mapState){
                         mapState = false;
-                        requestLocUpdate();
+                        if(!defaultLoc) requestLocUpdate();
                     }
                     if(settingF == null)
                         settingF = new SettingFragment();
@@ -193,33 +200,39 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             lastLocation = locationManager.getLastKnownLocation(provider);
             Toast.makeText(getBaseContext(),"dfsg",Toast.LENGTH_SHORT).show();
         }
-
+        defaultLoc = sqLiteHelper.useDefaultLocation();
         // Initialize the location fields
-        if (lastLocation != null) {
-            useLoc = true;
+        if (lastLocation != null && !defaultLoc) {
             onLocationChanged(lastLocation);
-        } else {
+        } else if(defaultLoc){
             if(isOnline())loadPois();
         }
 
-        if(lastPoiLocation != null) useLoc =true;
+        //if(lastPoiLocation != null) useLoc =true;
 
         mainF = new MainFragment();
         Bundle args = new Bundle();
-        if (lastLocation != null){
+        if (lastLocation != null && !defaultLoc){
             args.putDouble("latitude", lastLocation.getLatitude());
             args.putDouble("longitude", lastLocation.getLongitude());
+            mainF.setArguments(args);
+        }else if(defaultLoc){
+            GeoPoint g = sqLiteHelper.getLocation();
+            args.putDouble("latitude", g.getLatitude());
+            args.putDouble("longitude", g.getLongitude());
             mainF.setArguments(args);
         }
 
         loadFragment(mainF);
 
-        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-
-
+        if(!defaultLoc /*&& !BatteryReceiverRegistered*/){
+            this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            BatteryReceiverRegistered = true;
+        }
 
     }
 
+    //laod Pois
     private void loadPois(){
         getPOIAsync("Campingside");
         getPOIAsync("Train Station");
@@ -244,17 +257,23 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     }
 
+    // called by settingFragment -> use default Location
     @Override
     public void useDefaultLocation(boolean value) {
+        defaultLoc = value;
         if(value){
             this.unregisterReceiver(this.mBatteryReceiver);
             locationManager.removeUpdates(this);
             System.out.println("use DefaultLocation");
+            mAdapter.setLocation(sqLiteHelper.getLocation().getLatitude(), sqLiteHelper.getLocation().getLongitude());
             if(isOnline()){
                 loadPois();
             }
         }else{
-            this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+            if(true/*!BatteryReceiverRegistered*/){
+                this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+                BatteryReceiverRegistered = true;
+            }
             requestLocUpdate();
             System.out.println("Dont use DefaultLocation");
         }
@@ -265,14 +284,14 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         this.mAdapter = adapter;
     }
 
-    public void okayBattery(){
+    private void okayBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             if(mapState) updateTime = 10000;
             else updateTime = 300000; // 300s = 5min
             locationManager.requestLocationUpdates(provider, updateTime, 1, this);
         }
     }
-    public void lowBattery(){
+    private void lowBattery(){
         if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             if(mapState) updateTime = 20000;
             else updateTime = 600000; // 600s = 10min
@@ -304,6 +323,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             lastLocation = location;
             if(isOnline()){
                 if(lastPoiLocation != null){
+                    //point from where Pois where loaded last is more than 5km away than load new Pois
                     if(lastLocation.distanceTo(lastPoiLocation) > 5000 ){
                         lastPoiLocation = lastLocation;
                         loadPois();
@@ -313,9 +333,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     loadPois();
                 }
             }
-
-            if(mapF != null) {
-                //updateLocation(new GeoPoint(location.getLatitude(),location.getLongitude()));
+            // if map is visible, update location
+            if(mapF != null/* && mapF.isVisible()*/) {
+                mapF.updateLocation(new GeoPoint(location));
+                mapF.POIMap();
                 //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
             }
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
@@ -338,6 +359,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
     }
 
+    // asyncTask for loading Pois in Background
     private class POILoadingTask extends AsyncTask<String, Void, ArrayList<POI>> {
         String mFeatureTag;
         String message;
@@ -362,7 +384,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             cursor.close();
             maxDistance = maxDistance/100.0;
 
-            GeoPoint gp = (useLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): sqLiteHelper.getLocation();
+            GeoPoint gp = (!defaultLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): sqLiteHelper.getLocation();
 
 
 
@@ -382,21 +404,27 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         }
         protected void onPostExecute(ArrayList<POI> pois) {
             mPois.put(mFeatureTag,pois);
+            if(mapF != null /*&& mapF.isVisible()*/){
+                mapF.POIMap();
+            }
         }
 
     }
-    void getPOIAsync(String tag){
+
+    // call a new PoiLoadingTask for a specific tag
+    private void getPOIAsync(String tag){
         if(mPois.containsKey(tag)) mPois.remove(tag);
         new POILoadingTask().execute(tag);
     }
 
     //check if network connection is available
-    public boolean isOnline() {
+    private boolean isOnline() {
         ConnectivityManager cm =(ConnectivityManager)getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
         return netInfo != null && netInfo.isConnectedOrConnecting();
     }
 
+    //trigger LocationUpdates
     private void requestLocUpdate(){
         if(lowB)
             lowBattery();
