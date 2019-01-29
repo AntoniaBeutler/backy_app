@@ -274,16 +274,25 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
     //draw Poi Marker on Map
     public void POIMap(){
         poiList = MainActivity.mPois.get(poiType);
-        int poi_image;
+        int poi_image = 0;
         FolderOverlay poiMarkers = new FolderOverlay(getContext());
         map.getOverlays().add(poiMarkers);
 
-        Cursor cursor = MainActivity.sqLiteHelper.getImage(poiType);
-        cursor.moveToFirst();
+        try{
+            Cursor cursor = MainActivity.sqLiteHelper.getImage(poiType);
+            cursor.moveToFirst();
 
-        poi_image = cursor.getInt(cursor.getColumnIndex("image_res_id"));
+            poi_image = cursor.getInt(cursor.getColumnIndex("image_res_id"));
+            cursor.close();
+        } catch (IllegalArgumentException e){
+            Toast.makeText(getContext(), "IllegalArgumentException!", Toast.LENGTH_SHORT).show();
+        }
 
-        Drawable poiIcon = getDrawable(getContext(), poi_image);
+        Drawable poiIcon = null;
+        if (poi_image != 0){
+            poiIcon = getDrawable(getContext(), poi_image);
+        }
+
         if (poiList != null){
             for (POI poi:poiList){
                 PoiGeoL.add(poi.mLocation);
@@ -292,7 +301,9 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
                 poiMarker.setSnippet(poi.mDescription);
                 poiMarker.setSubDescription(Integer.toString((int)poi.mLocation.distanceToAsDouble(startPoint))+ " m");
                 poiMarker.setPosition(poi.mLocation);
-                poiMarker.setIcon(poiIcon);
+                if (poi_image != 0){
+                    poiMarker.setIcon(poiIcon);
+                }
                 if (poi.mThumbnail != null){
                     poiMarker.setImage(new BitmapDrawable(poi.mThumbnail));
                 }

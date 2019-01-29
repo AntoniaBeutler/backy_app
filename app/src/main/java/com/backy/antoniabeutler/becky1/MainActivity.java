@@ -50,7 +50,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private String provider;
     public static Location lastLocation,lastPoiLocation;
     private MyAdapter mAdapter;
-    public static Fragment mainF,socialF,settingF;
+    public static Fragment socialF,settingF;
+    public static MainFragment mainF;
     public static MapFragment mapF;
     public static FragmentManager fragManager;
     public static BottomNavigationView navigation;
@@ -70,18 +71,21 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     private BroadcastReceiver mBatteryReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            int chargingStatus = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
+            boolean isCharging = chargingStatus == BatteryManager.BATTERY_STATUS_CHARGING;
+
             int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
             Cursor cursor = sqLiteHelper.getPowerSaving();
             cursor.moveToFirst();
             int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("power_saving")));
-            if((level <= 5)&&(b == 1)) {
+            if((level <= 5)&&(b == 1) && !isCharging) {
                 if (locationManager.isProviderEnabled( LocationManager.GPS_PROVIDER)){
                     startActivity(new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS));
                 }
-            } else if (level < 30){
+            } else if (level < 30 && !defaultLoc && !isCharging){
                 lowB = true;
                 lowBattery();
-            } else {
+            } else if(!defaultLoc){
                 lowB = false;
                 okayBattery();
             }
@@ -225,10 +229,9 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
 
         loadFragment(mainF);
 
-        if(!defaultLoc /*&& !BatteryReceiverRegistered*/){
-            this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-            BatteryReceiverRegistered = true;
-        }
+
+        this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
 
     }
 
@@ -262,7 +265,6 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     public void useDefaultLocation(boolean value) {
         defaultLoc = value;
         if(value){
-            this.unregisterReceiver(this.mBatteryReceiver);
             locationManager.removeUpdates(this);
             System.out.println("use DefaultLocation");
             mAdapter.setLocation(sqLiteHelper.getLocation().getLatitude(), sqLiteHelper.getLocation().getLongitude());
@@ -270,11 +272,10 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 loadPois();
             }
         }else{
-            if(true/*!BatteryReceiverRegistered*/){
-                this.registerReceiver(this.mBatteryReceiver,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
-                BatteryReceiverRegistered = true;
-            }
             requestLocUpdate();
+            if(isOnline()){
+                loadPois();
+            }
             System.out.println("Dont use DefaultLocation");
         }
     }
@@ -303,8 +304,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     protected void onResume() {
         super.onResume();
-        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
-            locationManager.requestLocationUpdates(provider, updateTime, 1, this);
+        if (!defaultLoc && checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
+            requestLocUpdate();
         }
 
     }
@@ -313,6 +314,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
     @Override
     protected void onPause() {
         super.onPause();
+        System.out.println("onPause!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         locationManager.removeUpdates(this);
     }
 
@@ -340,6 +342,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                 //fragManager.beginTransaction().detach(mapF).attach(mapF).commit();
             }
             mAdapter.setLocation(location.getLatitude(), location.getLongitude());
+            //mAdapter.notifyDataSetChanged();
             //getApplicationContext().deleteDatabase("BackyDatabase");
         }
     }
@@ -399,6 +402,8 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
                     }
                 }
                 shortestdistance.put(mFeatureTag,dist);
+            }else{
+                shortestdistance.remove(mFeatureTag);
             }
             return pois;
         }
@@ -407,6 +412,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             if(mapF != null /*&& mapF.isVisible()*/){
                 mapF.POIMap();
             }
+            mAdapter.notifyDataSetChanged();
         }
 
     }
