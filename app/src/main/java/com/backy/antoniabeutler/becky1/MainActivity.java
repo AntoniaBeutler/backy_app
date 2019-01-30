@@ -170,8 +170,12 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             try
             {
                 addr = InetAddress.getByName(params[0]);
-                if (addr.isReachable(10000)){
+                boolean reach = addr.isReachable(1000);
+                if (isOnline() && reach) {
                     System.out.println("Reachable");
+                    b = true;
+                } else if (isOnline() && !reach){
+                    System.out.println("For testing purpose on virtual devices! Maybe not the best solution for testing if ping available.");
                     b = true;
                 } else {
                     System.out.println("Not Reachable");
