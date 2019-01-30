@@ -3,7 +3,6 @@ package com.backy.antoniabeutler.becky1.fragment;
 
 import android.content.Context;
 import android.database.Cursor;
-import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -79,27 +78,8 @@ public class MainFragment extends Fragment {
 
     }
 
-    private void loadTiles(){
-        String lTile;
-        Cursor cursor = MainActivity.sqLiteHelper.getLoadedTiles(1);
-
-        cursor.moveToFirst();
-        lTile = cursor.getString(cursor.getColumnIndex("poi"));
-        tile_List.add(new Tile(lTile));
-        while (cursor.moveToNext()){
-            lTile = cursor.getString(cursor.getColumnIndex("poi"));
-            if (lTile.equals("Add POI")){
-                tile_List.add(0, new Tile(cursor.getString(cursor.getColumnIndex("poi"))));
-            } else {
-                tile_List.add(new Tile(lTile));
-            }
-        }
-    }
-
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
 
         if (getArguments() != null) {
@@ -109,16 +89,11 @@ public class MainFragment extends Fragment {
 
         context = getContext();
 
-        //if(tile_List.isEmpty()) tile_List.add(new Tile("Add POI"));
-
         mRecyclerView = view.findViewById(R.id.my_recycler_view);
         mRecyclerView.setHasFixedSize(true);
 
         mLayoutManager = new GridLayoutManager(context,2);
         mRecyclerView.setLayoutManager(mLayoutManager);
-
-
-        //mAdapter.notifyDataSetChanged();
 
         mAdapter = new MyAdapter(context, tile_List, mLatitude, mLongitude , mRecyclerView, MainActivity.fragManager);
         try{
@@ -167,5 +142,22 @@ public class MainFragment extends Fragment {
         // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
         void giveAdapter(MyAdapter adapter);
+    }
+
+    private void loadTiles(){
+        String lTile;
+        Cursor cursor = MainActivity.sqLiteHelper.getLoadedTiles(1);
+
+        cursor.moveToFirst();
+        lTile = cursor.getString(cursor.getColumnIndex("poi"));
+        tile_List.add(new Tile(lTile));
+        while (cursor.moveToNext()){
+            lTile = cursor.getString(cursor.getColumnIndex("poi"));
+            if (lTile.equals("Add POI")){
+                tile_List.add(0, new Tile(cursor.getString(cursor.getColumnIndex("poi"))));
+            } else {
+                tile_List.add(new Tile(lTile));
+            }
+        }
     }
 }

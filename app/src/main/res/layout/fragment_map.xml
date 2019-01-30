@@ -16,7 +16,8 @@
         android:id="@+id/route"
         android:layout_width="117dp"
         android:layout_height="wrap_content"
-        android:text="Delete Route">
+        android:text="Delete Route"
+        style="@style/Widget.AppCompat.Button.Colored">
 
     </Button>
 

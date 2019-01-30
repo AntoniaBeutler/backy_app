@@ -88,8 +88,8 @@ public class SettingFragment extends Fragment {
         }
     }
 
+    //Receive results for the entered location name async
     class GeocodingTask extends AsyncTask<String, Void, List<Address>>{
-
         @Override
         protected List<Address> doInBackground(String... strings) {
 
@@ -103,7 +103,7 @@ public class SettingFragment extends Fragment {
         @Override
         protected void onPostExecute(List<Address> addresses) {
             super.onPostExecute(addresses);
-            if (addressList.size() != 0){
+            if (addressList!=null && addressList.size() != 0){
                 Address a = addressList.get(0);
                 String name;
                 if ((a.getLocality() == null)||(a.getLocality().equals(""))){
@@ -117,11 +117,13 @@ public class SettingFragment extends Fragment {
                 locationEdit.setText("");
                 locationEdit.onEditorAction(EditorInfo.IME_ACTION_DONE);
 
+            } else if (addressList==null){
+                Toast.makeText(getContext(), "No internet connection available!", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getContext(), "No location with stated name found!", Toast.LENGTH_SHORT).show();
             }
 
-            if(MainActivity.sqLiteHelper.useDefaultLocation()){
+            if(MainActivity.sqLiteHelper.getUseLocation()){
                 try{
                     ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation(true);
                 } catch (ClassCastException e){ }
@@ -129,6 +131,7 @@ public class SettingFragment extends Fragment {
         }
     }
 
+    //Different event listeners for the setting view -> store setting in database and retrieve settings from the database which will be displayed
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_setting, container, false);
@@ -154,25 +157,16 @@ public class SettingFragment extends Fragment {
         });
 
         useLocationCheckBox = view.findViewById(R.id.checkBoxUseLoc);
-        cursor = MainActivity.sqLiteHelper.getUseLocation();
-        cursor.moveToFirst();
-        int use_location = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
-        if (use_location == 1){
-            useLocationCheckBox.setChecked(true);
-        } else if (use_location == 0){
-            useLocationCheckBox.setChecked(false);
-        }
-        cursor.close();
+        boolean b = MainActivity.sqLiteHelper.getUseLocation();
+        useLocationCheckBox.setChecked(b);
 
         useLocationCheckBox.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 if (useLocationCheckBox.isChecked()) {
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 1, 0, 0, 0, 1);
-                    System.out.println("Checked");
                 } else {
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 1);
-                    System.out.println("Un-Checked");
                 }
                 updatePois();
             }
@@ -242,17 +236,13 @@ public class SettingFragment extends Fragment {
             public void onClick(View v) {
                 if (powerSaveCheckBox.isChecked()) {
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 1, 4);
-                    System.out.println("Checked");
                 } else {
                     MainActivity.sqLiteHelper.updateSettings("", 0.0, 0.0, 0, 0, 0, 0, 4);
-                    System.out.println("Un-Checked");
                 }
             }
         });
 
         return view;
-
-
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -296,7 +286,7 @@ public class SettingFragment extends Fragment {
     }
 
     private void updatePois(){
-        boolean b =  MainActivity.sqLiteHelper.useDefaultLocation();
+        boolean b =  MainActivity.sqLiteHelper.getUseLocation();
         try{
             ((SettingFragment.OnFragmentInteractionListener) getContext()).useDefaultLocation(b);
         } catch (ClassCastException e){ }

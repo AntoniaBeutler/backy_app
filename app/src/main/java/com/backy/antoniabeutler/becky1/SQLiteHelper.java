@@ -23,6 +23,7 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    //Create 2 tables in the database
     @Override
     public void onCreate(SQLiteDatabase db) {
         String image_tab = "CREATE TABLE tile(poi TEXT PRIMARY KEY, image_res_id INTEGER, loaded INTEGER)";
@@ -39,7 +40,10 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    //initially fill database with image resource id information and set the 'Add POI' tile as initially loaded
     public void loadImages(){
+        SQLiteDatabase db = this.getWritableDatabase();
+
         img.put("Hotel", R.drawable.hotel);
         img.put("Hostel", R.drawable.hostel);
         img.put("Water", R.drawable.water);
@@ -52,8 +56,6 @@ public class SQLiteHelper extends SQLiteOpenHelper {
 
         String[] key = img.keySet().toArray(new String[0]);
         int value = 0;
-
-        SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cValues = new ContentValues();
 
@@ -69,10 +71,10 @@ public class SQLiteHelper extends SQLiteOpenHelper {
                 cValues.put("loaded", 0);
             }
             db.insertOrThrow("tile", null, cValues);
-            System.out.println("loaded " + s);
         }
     }
 
+    //initialise the setting table with some dummy values, except the user name, which is the key to get the database content
     public void loadSettings(){
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -89,19 +91,22 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         db.insertOrThrow("setting", null, cValues);
     }
 
+    //Get a certain image specified as the string POI
     public Cursor getImage(String poi){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT image_res_id FROM tile WHERE poi=?";
         return db.rawQuery(query, new String[] { poi });
     }
 
+    //Get all loaded tiles which will be displayed at startup
     public Cursor getLoadedTiles(int loaded){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT poi FROM tile WHERE loaded=?";
         return db.rawQuery(query, new String[]{ Integer.toString(loaded) });
     }
 
-    public boolean updateTileState(String poi, int loaded){
+    //Updates the tiles, which are displayed at startup
+    public void updateTileState(String poi, int loaded){
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues cValues = new ContentValues();
@@ -110,37 +115,50 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         long result = db.update("tile", cValues, "poi=?", new String[] { poi });
 
         if (result == -1) {
-            return false;
+            System.out.println("Error!");
         } else {
-            return true;
+            System.out.println("Update successful!");
         }
     }
 
+    //Get the search radius for POIs defined by the user
     public Cursor getPOIRadius(){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT poi_radius FROM setting WHERE user=?";
         return db.rawQuery(query, new String[]{ "Android" });
     }
 
+    //Get the amount of searched POIs defined by the user
     public Cursor getPOIAmount(){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT poi_amount FROM setting WHERE user=?";
         return db.rawQuery(query, new String[]{ "Android" });
     }
 
+    //Get the setting whether the user wants to use the power saving mode or not
     public Cursor getPowerSaving(){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT power_saving FROM setting WHERE user=?";
         return db.rawQuery(query, new String[]{ "Android" });
     }
 
-
-    public Cursor getUseLocation(){
+    //Get the setting whether the user wants to use a self-defined location or not
+    public boolean getUseLocation(){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT use_location FROM setting WHERE user=?";
-        return db.rawQuery(query, new String[]{ "Android" });
+
+        Cursor cursor = db.rawQuery(query, new String[]{ "Android" });
+        cursor.moveToFirst();
+        int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
+        cursor.close();
+        if (b == 1){
+            return true;
+        } else {
+            return false;
+        }
     }
 
+    //Updates the setting table -> when called a type must be specified
     public boolean updateSettings(String location, double latitude, double longitude, int use_location, int poi_radius, int poi_amount, int power_saving, int type){
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -163,12 +181,14 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         }
     }
 
+    //Get the name of the default location
     public Cursor getLocationName(){
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT location FROM setting WHERE user=?";
         return db.rawQuery(query, new String[]{ "Android" });
     }
 
+    //Get the latitude and longitude of the default location
     public GeoPoint getLocation(){
         SQLiteDatabase db = this.getReadableDatabase();
         String query1 = "SELECT longitude FROM setting WHERE user=?";
@@ -181,17 +201,6 @@ public class SQLiteHelper extends SQLiteOpenHelper {
         c2.moveToFirst();
         double latitude = (Double.parseDouble(c2.getString(c2.getColumnIndex("latitude"))));
         c2.close();
-        GeoPoint g = new GeoPoint(latitude,longitude);
-        return g;
+        return new GeoPoint(latitude,longitude);
     }
-
-    public boolean useDefaultLocation(){
-
-        Cursor cursor = MainActivity.sqLiteHelper.getUseLocation();
-        cursor.moveToFirst();
-        int b = Integer.parseInt(cursor.getString(cursor.getColumnIndex("use_location")));
-        cursor.close();
-        return b ==1 ? true : false;
-    }
-
 }

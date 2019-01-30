@@ -108,14 +108,11 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_map, container, false);
         final Button button = view.findViewById(R.id.route);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                //mapDownLoad(getContext());
                 if(roadOverlay != null) map.getOverlays().remove(roadOverlay);
                 if(mRoadNodeMarkers != null){
                     mRoadNodeMarkers.getItems().clear();
@@ -134,7 +131,7 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
 
             locationAvailable = getArguments().getBoolean("locationAvailable");
 
-            if (MainActivity.sqLiteHelper.useDefaultLocation()){
+            if (MainActivity.sqLiteHelper.getUseLocation()){
                 startPoint = MainActivity.sqLiteHelper.getLocation();
             } else if(locationAvailable){
                 startPoint = new GeoPoint(0.0, 0.0);
@@ -167,42 +164,14 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
         mapController.setCenter(startPoint);
 
         map.invalidate();
-        //ArrayList<GeoPoint> GPList = new ArrayList<>();
-        //GPList.add(startPoint);
 
         if(poiType != null){
             POIMap();
         }
         return view;
     }
-    public void mapDownLoad(Context ctx){
-        ArrayList<GeoPoint> gpList = new ArrayList<>();
-        GeoPoint g = MainActivity.sqLiteHelper.getLocation();
-        g = new GeoPoint(51.0,13.0);
-        gpList.add(g);
-        Toast.makeText(ctx,String.valueOf(g.getLatitude()),Toast.LENGTH_SHORT).show();
-        if (cachemanager == null){
-            cachemanager = new CacheManager(map);
-            cachemanager.downloadAreaAsync(ctx, gpList, 15, 15);
-        }else{
-            cachemanager.downloadAreaAsync(ctx, gpList, 15, 15);
-        }
 
-    }
-
-    public void deleteMap(Context ctx){
-        ArrayList<GeoPoint> gpList = new ArrayList<>();
-        GeoPoint g = MainActivity.sqLiteHelper.getLocation();
-        g = new GeoPoint(51.0,13.0);
-        gpList.add(g);
-
-        if (cachemanager == null)
-            cachemanager = new CacheManager(map);
-        cachemanager.cleanAreaAsync(ctx,gpList,15,15);
-
-    }
-
-    //update the locationoverlay -> is called by main activity when location changed
+    //update the location overlay -> is called by main activity when location changed
     public void updateLocation(GeoPoint startPoint){
         this.startPoint = startPoint;
         myLocationOverlay.setLocation(startPoint);
@@ -212,8 +181,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
 
     ////Async Task for Route calculation
     private class roadTask extends AsyncTask<ArrayList<GeoPoint>, Void, Road> {
-
-
         @Override
         protected Road doInBackground(ArrayList<GeoPoint>... params) {
 
@@ -239,7 +206,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
 
     //draw route on Map
     private void route(Road road){
-
         mRoadNodeMarkers.getItems().clear();
         map.getOverlays().remove(mRoadNodeMarkers);
         double d = road.mDuration;
@@ -250,22 +216,15 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
         map.getOverlays().add(1,roadOverlay);
         map.invalidate();
 
-        //Drawable nodeIcon = getDrawable(getContext(), poi_image);
         for (int i=0; i<road.mNodes.size(); i++){
             RoadNode node = road.mNodes.get(i);
             Marker nodeMarker = new Marker(map);
             nodeMarker.setPosition(node.mLocation);
-            //nodeMarker.setIcon(nodeIcon);
             nodeMarker.setTitle("Step "+i);
 
             nodeMarker.setSnippet(node.mInstructions);
             nodeMarker.setSubDescription(Road.getLengthDurationText(getContext(), node.mLength, node.mDuration));
-            //Drawable icon = getResources().getDrawable(R.drawable.ic_continue);
-            //nodeMarker.setImage(icon);
             mRoadNodeMarkers.add(nodeMarker);
-
-            //map.getOverlays().add(nodeMarker);
-
         }
         map.getOverlays().add(mRoadNodeMarkers);
         map.invalidate();
@@ -285,7 +244,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
             poi_image = cursor.getInt(cursor.getColumnIndex("image_res_id"));
             cursor.close();
         } catch (IllegalArgumentException e){
-            Toast.makeText(getContext(), "IllegalArgumentException!", Toast.LENGTH_SHORT).show();
         }
 
         Drawable poiIcon = null;
@@ -311,8 +269,6 @@ public class MapFragment extends Fragment implements MapEventsReceiver{
             }
         }
         map.invalidate();
-
-
     }
 
     public void onResume(){

@@ -2,6 +2,7 @@ package com.backy.antoniabeutler.becky1;
 
 import android.database.Cursor;
 
+//Class that represents one tile on the MainFragment
 public class Tile {
 
     private int img_src;
@@ -22,10 +23,6 @@ public class Tile {
         return tile_name;
     }
     public int getImg_src() {return img_src;}
-
-    public double getDistance() {
-        return distance;
-    }
 
     public void setDistance(double distance) {
         this.distance = distance;

@@ -1,11 +1,7 @@
 package com.backy.antoniabeutler.becky1;
 
 import android.content.Context;
-import android.content.Intent;
-import android.location.Location;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.CardView;
@@ -24,7 +20,6 @@ import com.backy.antoniabeutler.becky1.fragment.MapFragment;
 import java.text.DecimalFormat;
 import java.util.List;
 
-import static com.backy.antoniabeutler.becky1.MainActivity.mPois;
 import static com.backy.antoniabeutler.becky1.MainActivity.mapF;
 import static com.backy.antoniabeutler.becky1.MainActivity.navigation;
 
@@ -33,7 +28,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     public static Context context;
     public static Double longitude, latitude;
     public static RecyclerView recView;
-    public static Fragment mFrag;
     public static FragmentManager fragManager;
 
     public static class MyViewHolder extends RecyclerView.ViewHolder {
@@ -69,13 +63,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                                 }
                                 mDataset.add(new Tile(item.getTitle().toString()));
 
-                                boolean b = MainActivity.sqLiteHelper.updateTileState(item.getTitle().toString(), 1);
-                                if (b){
-                                    System.out.println("Save was successful " + item.getTitle().toString());
-                                } else{
-                                    System.out.println("Save not successful"  + item.getTitle().toString());
-                                }
-
+                                MainActivity.sqLiteHelper.updateTileState(item.getTitle().toString(), 1);
 
                                 MyAdapter mAdapter = new MyAdapter(context, mDataset, latitude, longitude, recView, fragManager);
                                 recView.setAdapter(mAdapter);
@@ -89,8 +77,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
                         if (mapF == null){
                             mapF = new MapFragment();
                         }
+
                         Bundle args = new Bundle();
-                        boolean d = MainActivity.sqLiteHelper.useDefaultLocation();
                         if (latitude != null || longitude != null){
                             args.putDouble("latitude", latitude);
                             args.putDouble("longitude", longitude);
@@ -121,6 +109,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         this.fragManager = fragManager;
     }
 
+    //set the location for the Adapter which is passed to the MapFragment
     public void setLocation(Double latitude, Double longitude){
         this.latitude = latitude;
         this.longitude = longitude;
@@ -132,7 +121,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
 
         }
         notifyDataSetChanged();
-
     }
 
     // Create new views (invoked by the layout manager)
@@ -145,47 +133,36 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         return vh;
     }
 
-
-
     // Replace the contents of a view (invoked by the layout manager)
     @Override
     public void onBindViewHolder(MyViewHolder holder, final int position) {
         holder.mImage.setImageResource(mDataset.get(position).getImg_src());
         holder.info_text.setText(mDataset.get(position).getTile_name());
         if (mDataset.get(position).getTile_name().equals("Add POI")){
-        holder.delete.setVisibility(View.GONE);
-        holder.info_text.setVisibility(View.INVISIBLE);
-        holder.distance.setVisibility(View.INVISIBLE);
-    } else {
-        holder.info_text.setText(mDataset.get(position).getTile_name());
-        holder.delete.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                boolean b = MainActivity.sqLiteHelper.updateTileState(mDataset.get(position).getTile_name(), 0);
-                if (b){
-                    System.out.println("Remove was successful " + mDataset.get(position).getTile_name());
-                } else{
-                    System.out.println("Remove not successful"  + mDataset.get(position).getTile_name());
+            holder.delete.setVisibility(View.GONE);
+            holder.info_text.setVisibility(View.INVISIBLE);
+             holder.distance.setVisibility(View.INVISIBLE);
+        } else {
+            holder.info_text.setText(mDataset.get(position).getTile_name());
+            holder.delete.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    MainActivity.sqLiteHelper.updateTileState(mDataset.get(position).getTile_name(), 0);
+                    mDataset.remove(position);
+                    notifyItemRemoved(position);
+                    notifyItemRangeChanged(position, getItemCount());
                 }
-                mDataset.remove(position);
-                notifyItemRemoved(position);
-                notifyItemRangeChanged(position, getItemCount());
+            });
+            String s;
+            if(!MainActivity.shortestdistance.containsKey(mDataset.get(position).getTile_name())){
+                s = "Nothing found!";
+            }else{
+                DecimalFormat df = new DecimalFormat("###.##");
+                s  = df.format(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()))+ " m";
             }
-        });
-        String s;
-        if(!MainActivity.shortestdistance.containsKey(mDataset.get(position).getTile_name())){
-            s = "Nothing found!";
-        }else{
-            DecimalFormat df = new DecimalFormat("###.##");
-            s  = df.format(MainActivity.shortestdistance.get(mDataset.get(position).getTile_name()))+ " m";
+            holder.distance.setText(s);
         }
-        holder.distance.setText(s);
     }
-
-}
-
-
-
 
     // Return the size of your dataset (invoked by the layout manager)
     @Override
