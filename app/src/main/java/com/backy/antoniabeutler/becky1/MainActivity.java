@@ -166,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
         protected Boolean doInBackground(String... params)
         {
             InetAddress addr = null;
-            boolean b = false;
+            /*boolean b = false;
             try
             {
                 addr = InetAddress.getByName(params[0]);
@@ -189,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            return b;
+            return b;*/ return true;
         }
 
 
@@ -428,9 +428,11 @@ public class MainActivity extends AppCompatActivity implements LocationListener,
             cursor.close();
             maxDistance = maxDistance/100.0;
             GeoPoint gp;
-            if (lastLocation!=null){
-                gp = (!defaultLoc)? new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude()): sqLiteHelper.getLocation();
-            } else {
+            if (!defaultLoc && lastLocation != null){
+                gp = new GeoPoint(lastLocation.getLatitude(),lastLocation.getLongitude());
+            } else if(defaultLoc){
+                gp = sqLiteHelper.getLocation();
+            }else{
                 gp = new GeoPoint(0.0, 0.0);
             }
             NominatimPOIProvider poiProvider = new NominatimPOIProvider("Backy-App_for_backpacker_and_travelers_university_project");
